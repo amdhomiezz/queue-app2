@@ -384,6 +384,22 @@
             background-color: #2563eb; /* Darker blue on hover */
         }
 
+        /* New Floating Daily Report Button */
+        #fixedDailyReportButtonContainer {
+            position: fixed;
+            bottom: 20px;
+            left: 260px; /* Positioned to the right of View Pre-reg button */
+            z-index: 999;
+            display: none; /* Hidden by default, shown by JS */
+        }
+        #toggleDailyReportButton { /* Specific style for Daily Report button */
+            background-color: #f59e0b; /* Amber for report */
+            color: #fff;
+        }
+        #toggleDailyReportButton:hover {
+            background-color: #d97706; /* Darker amber on hover */
+        }
+
 
         #fixedResetButtonContainer {
             position: fixed;
@@ -516,19 +532,22 @@
             กำลังประมวลผล... โปรดรอสักครู่
         </div>
 
-        <!-- ส่วนสำหรับรายงานการลงทะเบียน -->
-        <div class="report-section">
+        <!-- ส่วนสำหรับรายงานการลงทะเบียน - ซ่อนตารางและจะแสดงเมื่อผู้ดูแลระบบกดปุ่มเท่านั้น -->
+        <div id="reportSection" class="report-section" style="display: none;">
             <h2 class="text-xl font-bold text-gray-800 mb-4">ลำดับหมายเลขผู้เรียนประจำวัน</h2>
             <div id="reportLoadingIndicator" class="report-loading-indicator">
                 กำลังโหลดรายงาน...
             </div>
-            <!-- Modified to display two columns for tables -->
             <div id="registrationReport" class="mt-4 flex flex-wrap -mx-2">
                 <div id="leftTableContainer" class="w-full md:w-1/2 px-2"></div>
                 <div id="rightTableContainer" class="w-full md:w-1/2 px-2"></div>
                 <p id="noReportDataMessage" class="no-data-message hidden w-full px-2">ยังไม่มีข้อมูลการลงทะเบียนสำหรับวันนี้</p>
             </div>
+            <div class="mt-4">
+                <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg w-auto">ปิดรายงาน</button>
+            </div>
         </div>
+
 
         <!-- Moved here: Display of current registered students -->
         <div id="currentQueueInfo" class="current-queue-info">
@@ -633,6 +652,14 @@
         </button>
     </div>
 
+    <!-- New Floating Daily Report Button (Bar Chart Icon) -->
+    <div id="fixedDailyReportButtonContainer">
+        <button id="toggleDailyReportButton" class="floating-icon-button">
+            <i class="fas fa-chart-bar"></i> <!-- Icon for chart/report -->
+        </button>
+    </div>
+
+
     <!-- New Floating Reset Button (Smiling Face Icon) -->
     <div id="fixedResetButtonContainer">
         <button id="resetQueueButton" class="floating-icon-button">
@@ -690,9 +717,11 @@
         const errorDisplay = document.getElementById('errorDisplay');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const highestQueueNumberDisplay = document.getElementById('highestQueueNumberDisplay');
-        const registrationReportDiv = document.getElementById('registrationReport');
+        const reportSection = document.getElementById('reportSection'); // The main div for the report
+        const registrationReportDiv = document.getElementById('registrationReport'); // The div containing the tables
         const noReportDataMessage = document.getElementById('noReportDataMessage');
         const reportLoadingIndicator = document.getElementById('reportLoadingIndicator');
+        const closeDailyReportButton = document.getElementById('closeDailyReportButton'); // New close button
 
         // Admin UI elements
         const adminPanelContainer = document.getElementById('adminPanelContainer');
@@ -700,6 +729,7 @@
         const toggleExportReportButton = document.getElementById('toggleExportReportButton');
         const toggleImportIdsButton = document.getElementById('toggleImportIdsButton'); // New: Import button
         const toggleViewPreRegButton = document.getElementById('toggleViewPreRegButton'); // New: View Pre-reg button
+        const toggleDailyReportButton = document.getElementById('toggleDailyReportButton'); // New: Daily Report button
         const adminPasswordInput = document.getElementById('adminPasswordInput');
         const passwordErrorDisplay = document.getElementById('passwordErrorDisplay');
         const resetQueueButton = document.getElementById('resetQueueButton');
@@ -718,10 +748,9 @@
         const totalPreRegisteredStudentsSpan = document.getElementById('totalPreRegisteredStudents');
         const preRegisteredIdsTable = document.getElementById('preRegisteredIdsTable');
         const preRegisteredIdsTableBody = preRegisteredIdsTable.querySelector('tbody');
-        const noPreRegDataMessage = document.getElementById('noReportDataMessage');
+        const noPreRegDataMessagePreReg = document.getElementById('noPreRegDataMessage'); // Renamed to avoid clash
         const selectAllPreRegIdsCheckbox = document.getElementById('selectAllPreRegIds');
         const deleteSelectedPreRegisteredIdsButton = document.getElementById('deleteSelectedPreRegisteredIdsButton');
-        // Removed clearAllPreRegisteredIdsButton from here
         const closeViewPreRegModalButton = document.getElementById('closeViewPreRegModalButton');
 
 
@@ -756,6 +785,16 @@
                 registerButton.disabled = false;
                 // After authentication, set up real-time queue data listener
                 setupQueueInfoListener();
+
+                // Removed fetchRegistrationReport() from here to prevent automatic loading
+                // fetchRegistrationReport();
+
+                // Ensure admin action buttons are hidden on initial load until login
+                toggleAdminActionButtons(false);
+                // Ensure admin panel is hidden on initial load
+                hideAdminPanel();
+                // Ensure daily report is hidden on initial load
+                hideDailyReport();
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
                 try {
@@ -903,7 +942,6 @@
         function showReportLoading(show) {
             if (show) {
                 reportLoadingIndicator.classList.remove('hidden');
-                // Don't clear registrationReportDiv here, as it now contains containers
                 document.getElementById('leftTableContainer').innerHTML = '';
                 document.getElementById('rightTableContainer').innerHTML = '';
                 noReportDataMessage.classList.add('hidden'); // Hide no data message
@@ -992,13 +1030,23 @@
         }
 
         /**
-         * Toggles the visibility of admin action buttons (Export, Import, View/Manage, Reset).
+         * Hides the daily registration report table.
+         */
+        function hideDailyReport() {
+            reportSection.style.display = 'none';
+            // Also ensure noReportDataMessage is hidden when the whole section is hidden
+            noReportDataMessage.classList.add('hidden');
+        }
+
+        /**
+         * Toggles the visibility of admin action buttons (Export, Import, View/Manage, Daily Report, Reset).
          * @param {boolean} show True to show, False to hide.
          */
         function toggleAdminActionButtons(show) {
             document.getElementById('fixedExportButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedImportButtonContainer').style.display = show ? 'flex' : 'none';
-            document.getElementById('fixedViewPreRegButtonContainer').style.display = show ? 'flex' : 'none'; // New button
+            document.getElementById('fixedViewPreRegButtonContainer').style.display = show ? 'flex' : 'none';
+            document.getElementById('fixedDailyReportButtonContainer').style.display = show ? 'flex' : 'none'; // New button
             document.getElementById('fixedResetButtonContainer').style.display = show ? 'flex' : 'none';
         }
 
@@ -1190,7 +1238,13 @@
                 showMessage(`คุณได้รับคิวหมายเลข: ${newQueueNumber}`);
                 studentIdInput.value = '';
                 dailyAnswerInput.value = ''; // Clear daily answer input
-                fetchRegistrationReport();
+                
+                // No need to call refreshAndDisplayRegistrationReport() here unless the report is visible
+                // and should update automatically. For manual display, this is skipped.
+                // If report is visible, you might call it to reflect the new registration instantly:
+                if (reportSection.style.display !== 'none') {
+                     refreshAndDisplayRegistrationReport();
+                }
 
             } catch (e) {
                 console.error("Error in transaction or registration:", e);
@@ -1215,8 +1269,10 @@
 
         /**
          * Fetches and displays the registration report for the current day.
+         * This function now primarily updates 'currentRegistrationsData' for export,
+         * and the table display elements are hidden in HTML.
          */
-        async function fetchRegistrationReport() {
+        async function refreshAndDisplayRegistrationReport() {
             if (!authReady) {
                 console.warn("Authentication not ready for report fetch.");
                 showError("ระบบยังไม่พร้อม โปรดรอสักครู่และลองอีกครั้ง");
@@ -1224,7 +1280,7 @@
             }
 
             showReportLoading(true);
-            noReportDataMessage.classList.add('hidden');
+            hideMessages(); // Clear any other messages
 
             const currentDate = getCurrentDate();
             try {
@@ -1245,7 +1301,6 @@
                 // Get the table containers
                 const leftTableContainer = document.getElementById('leftTableContainer');
                 const rightTableContainer = document.getElementById('rightTableContainer');
-
 
                 // Clear previous content
                 leftTableContainer.innerHTML = '';
@@ -1305,6 +1360,7 @@
                 } else {
                     noReportDataMessage.classList.remove('hidden');
                 }
+                reportSection.style.display = 'block'; // Show the report section
             } catch (e) {
                 console.error("Error fetching registration report:", e);
                 showError("เกิดข้อผิดพลาดในการดึงรายงานการลงทะเบียน");
@@ -1395,7 +1451,7 @@
                 if (querySnapshot.empty) {
                     showMessage("ไม่มีข้อมูลคิวให้รีเซ็ตสำหรับวันนี้");
                     showLoading(false);
-                    fetchRegistrationReport(); // Refresh report even if empty
+                    // No need to fetch and display report if empty
                     return;
                 }
 
@@ -1414,7 +1470,13 @@
                 }, { merge: true });
 
                 showMessage("รีเซ็ตคิวทั้งหมดสำหรับวันนี้สำเร็จแล้ว");
-                fetchRegistrationReport(); // Refresh report after successful reset
+                // Only refresh display if it's currently visible
+                if (reportSection.style.display !== 'none') {
+                    refreshAndDisplayRegistrationReport();
+                } else {
+                    // If not visible, just ensure local data is clear or highest queue is reset
+                    currentRegistrationsData = [];
+                }
             } catch (e) {
                 console.error("Error resetting queues:", e);
                 showError("เกิดข้อผิดพลาดในการรีเซ็ตคิว โปรดลองอีกครั้ง");
@@ -1447,7 +1509,7 @@
                                            .filter(id => id.length > 0);
 
             if (idsToSave.length === 0) {
-                showPreRegSaveErrorModal("ไม่พบรหัสนักศึกษาที่ถูกต้อง กรุณาตรวจสอบรูปแบบ (10 หลัก, ตัวเลข)");
+                showPreRegSaveErrorModal("ไม่พบรหัสนักษาที่ถูกต้อง กรุณาตรวจสอบรูปแบบ (10 หลัก, ตัวเลข)");
                 console.log("Validation failed: Parsed IDs list is empty.");
                 return;
             }
@@ -1539,14 +1601,12 @@
             totalPreRegisteredStudentsSpan.textContent = preRegisteredStudentsData.length;
 
             if (preRegisteredStudentsData.length === 0) {
-                noPreRegDataMessage.classList.remove('hidden');
+                noPreRegDataMessagePreReg.classList.remove('hidden');
                 preRegisteredIdsTableContainer.classList.add('hidden'); // Hide table container if no data
-                // Removed clearAllPreRegisteredIdsButton.disabled = true;
                 return;
             } else {
-                noPreRegDataMessage.classList.add('hidden');
+                noPreRegDataMessagePreReg.classList.add('hidden');
                 preRegisteredIdsTableContainer.classList.remove('hidden'); // Show table container
-                // Removed clearAllPreRegisteredIdsButton.disabled = false;
             }
 
             preRegisteredStudentsData.forEach(id => {
@@ -1779,37 +1839,6 @@
             }
         }
 
-        // Removed clearAllPreRegisteredIds function
-        /*
-        async function clearAllPreRegisteredIds() {
-            try {
-                showLoading(true);
-                const preRegCollectionRef = collection(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`);
-                const existingDocsSnapshot = await getDocs(preRegCollectionRef);
-                
-                if (existingDocsSnapshot.empty) {
-                    showMessage("ไม่มีข้อมูลรายชื่อนักศึกษาล่วงหน้าให้ลบ");
-                    return;
-                }
-
-                const deleteBatch = writeBatch(db);
-                existingDocsSnapshot.forEach(docSnap => {
-                    deleteBatch.delete(docSnap.ref);
-                });
-                await deleteBatch.commit();
-
-                showMessage("ลบรายชื่อนักศึกษาล่วงหน้าทั้งหมดสำเร็จแล้ว");
-                preRegisteredStudentsData = []; // Clear local data
-                renderPreRegisteredIdsTable(); // Re-render empty table
-            } catch (e) {
-                console.error("Error clearing all pre-registered IDs:", e);
-                showError("เกิดข้อผิดพลาดในการลบรายชื่อนักศึกษาล่วงหน้าทั้งหมด");
-            } finally {
-                showLoading(false);
-            }
-        }
-        */
-
         /**
          * Updates the state of the "Delete Selected" button based on checkbox selections.
          */
@@ -1831,6 +1860,7 @@
                 // If admin was logged in, clicking the question mark again should hide the action buttons
                 if (isAdminLoggedIn) {
                     toggleAdminActionButtons(false);
+                    hideDailyReport(); // Also hide the report if admin buttons are toggled off
                 }
             } else { // If admin password panel is hidden
                 if (isAdminLoggedIn) { // If admin is already logged in, just toggle action buttons visibility
@@ -1870,16 +1900,22 @@
                     showPasswordError("Passphrase ไม่ถูกต้อง");
                     isAdminLoggedIn = false;
                     toggleAdminActionButtons(false); // Ensure buttons are hidden on failed login
+                    hideDailyReport(); // Hide report if login fails
                 }
                 event.preventDefault();
             }
         });
 
         // Handle click on the Export Button
-        toggleExportReportButton.addEventListener('click', () => {
+        toggleExportReportButton.addEventListener('click', async () => {
             hideMessages(); // Clear any previous messages
             if (isAdminLoggedIn) { // Check if admin session is active
+                showLoading(true);
+                // Ensure data is fresh before export, especially if not displayed on screen
+                await refreshAndDisplayRegistrationReport(); // This will fetch and populate currentRegistrationsData
+                showLoading(false); // Hide loading after fetch
                 exportRegistrationReportToCsv();
+                hideDailyReport(); // Hide the table after export as per requirement
             } else {
                 showAdminPanel(); // Show panel to prompt for password
                 showPasswordError("กรุณากรอก Passphrase ก่อน"); // Prompt message
@@ -1890,6 +1926,7 @@
         toggleImportIdsButton.addEventListener('click', () => {
             hideMessages(); // Clear any previous messages
             if (isAdminLoggedIn) { // Check if admin session is active
+                hideDailyReport(); // Hide daily report if other admin function is opened
                 showImportStudentIdsModal(); // Show the new import modal
             } else {
                 showAdminPanel(); // Show panel to prompt for password
@@ -1901,12 +1938,33 @@
         toggleViewPreRegButton.addEventListener('click', () => {
             hideMessages(); // Clear any previous messages
             if (isAdminLoggedIn) { // Check if admin session is active
+                hideDailyReport(); // Hide daily report if other admin function is opened
                 showViewPreRegisteredIdsModal(); // Show the new view/manage modal
             } else {
                 showAdminPanel(); // Show panel to prompt for password
                 showPasswordError("กรุณากรอก Passphrase ก่อน"); // Prompt message
             }
         });
+
+        // Handle click on the Daily Report Button (New)
+        toggleDailyReportButton.addEventListener('click', () => {
+            hideMessages(); // Clear any previous messages
+            if (isAdminLoggedIn) { // Check if admin session is active
+                if (reportSection.style.display === 'block') { // If report is currently visible
+                    hideDailyReport(); // Hide it
+                } else {
+                    hideImportStudentIdsModal(); // Hide other admin modals
+                    hideViewPreRegisteredIdsModal(); // Hide other admin modals
+                    refreshAndDisplayRegistrationReport(); // Fetch and show the daily report
+                }
+            } else {
+                showAdminPanel(); // Show panel to prompt for password
+                showPasswordError("กรุณากรอก Passphrase ก่อน"); // Prompt message
+            }
+        });
+
+        // Handle click on the Close Daily Report Button
+        closeDailyReportButton.addEventListener('click', hideDailyReport);
 
 
         // Handle click on the Reset Queue Button
@@ -1924,6 +1982,7 @@
                     } else {
                         showError("ไม่สามารถส่งออกข้อมูลได้ จึงไม่ทำการรีเซ็ตคิว"); // Inform user if export failed
                     }
+                    hideDailyReport(); // Always hide the report section after reset attempt
                 });
             } else {
                 showAdminPanel(); // Show panel to prompt for password
@@ -1966,28 +2025,6 @@
                 });
             } else {
                 showMessage("โปรดเลือกรหัสนักศึกษาที่ต้องการลบก่อน");
-            }
-        });
-
-        // Removed Clear All Pre-registered IDs button listener
-        /*
-        clearAllPreRegisteredIdsButton.addEventListener('click', () => {
-            showConfirmationModal("คุณแน่ใจหรือไม่ที่ต้องการลบรายชื่อนักศึกษาที่ลงทะเบียนล่วงหน้าทั้งหมด? การดำเนินการนี้ไม่สามารถย้อนกลับได้", async () => {
-                await clearAllPreRegisteredIds();
-                hideViewPreRegisteredIdsModal(); // Hide modal after clearing
-            });
-        });
-        */
-
-
-        // Initial setup on page load
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                fetchRegistrationReport();
-                // Ensure admin action buttons are hidden on initial load until login
-                toggleAdminActionButtons(false);
-                // Ensure admin panel is hidden on initial load
-                hideAdminPanel();
             }
         });
     </script>
