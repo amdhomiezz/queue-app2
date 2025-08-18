@@ -135,6 +135,8 @@
             /* font-size for this specific p tag is set below in HTML to text-2xl */
             font-weight: 500;
             color: #047857;
+            /* Initially hidden for student view */
+            display: none;
         }
         .report-section {
             margin-top: 30px;
@@ -550,6 +552,7 @@
 
 
         <!-- Moved here: Display of current registered students -->
+        <!-- Hidden by default. Only visible to admin when daily report is opened. -->
         <div id="currentQueueInfo" class="current-queue-info">
             <p class="text-2xl font-bold text-green-700">จำนวนของนักศึกษาที่เช็คชื่อแล้ววันนี้: <span id="highestQueueNumberDisplay" class="font-bold text-green-700">--</span></p>
         </div>
@@ -672,22 +675,8 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
-
-
-        // Firebase configuration (from your Firebase project)
-        // IMPORTANT: Replace these with your actual Firebase project's configuration.
-        // You can find this in your Firebase project settings -> Project settings -> General -> Your apps -> Web app.
-        // const firebaseConfig = { // Old hardcoded config
-        //     apiKey: "AIzaSyDSHO-N-kX8CRNPv0z9WMK0AfdiAa5_PRA",
-        //     authDomain: "queue-app2.firebaseapp.com",
-        //     projectId: "queue-app2",
-        //     storageBucket: "queue-app2.firebasestorage.app",
-        //     messagingSenderId: "431996014467",
-        //     appId: "1:431996014467:web:8c9ab7cfdde6d3b27f70b6",
-        //     measurementId: "G-N26VFDKR6L"
-        // };
 
         // MANDATORY: Use __firebase_config from the Canvas environment
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { 
@@ -722,6 +711,7 @@
         const noReportDataMessage = document.getElementById('noReportDataMessage');
         const reportLoadingIndicator = document.getElementById('reportLoadingIndicator');
         const closeDailyReportButton = document.getElementById('closeDailyReportButton'); // New close button
+        const currentQueueInfoDiv = document.getElementById('currentQueueInfo'); // Reference to the queue info div
 
         // Admin UI elements
         const adminPanelContainer = document.getElementById('adminPanelContainer');
@@ -783,18 +773,14 @@
                 console.log("Firebase authenticated. User ID:", currentUserId);
                 // Enable user-facing buttons when Firebase is ready
                 registerButton.disabled = false;
-                // After authentication, set up real-time queue data listener
-                setupQueueInfoListener();
-
-                // Removed fetchRegistrationReport() from here to prevent automatic loading
-                // fetchRegistrationReport();
-
-                // Ensure admin action buttons are hidden on initial load until login
+                
+                // Ensure admin action buttons and panel/report are hidden on initial load
                 toggleAdminActionButtons(false);
-                // Ensure admin panel is hidden on initial load
                 hideAdminPanel();
-                // Ensure daily report is hidden on initial load
                 hideDailyReport();
+                // Ensure highestQueueNumberDisplay is hidden for non-admin view on load
+                currentQueueInfoDiv.style.display = 'none';
+
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
                 try {
@@ -1036,6 +1022,8 @@
             reportSection.style.display = 'none';
             // Also ensure noReportDataMessage is hidden when the whole section is hidden
             noReportDataMessage.classList.add('hidden');
+            // Hide highestQueueNumberDisplay when daily report is closed
+            currentQueueInfoDiv.style.display = 'none';
         }
 
         /**
@@ -1050,35 +1038,36 @@
             document.getElementById('fixedResetButtonContainer').style.display = show ? 'flex' : 'none';
         }
 
-        // --- Firestore Data Operations ---
-
         /**
-         * Sets up a real-time listener for current queue metadata.
+         * Fetches and updates the highest queue number displayed for admin.
          */
-        function setupQueueInfoListener() {
+        async function updateHighestQueueNumberDisplayForAdmin() {
             if (!authReady) {
-                console.warn("Authentication not ready for listener setup.");
                 return;
             }
 
             const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
-            onSnapshot(queueMetadataRef, (docSnap) => {
+            try {
+                const docSnap = await getDoc(queueMetadataRef); // Use getDoc instead of onSnapshot
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     highestQueueNumberDisplay.textContent = data.highestQueueNumber || 0;
                 } else {
-                    highestQueueNumberDisplay.textContent = 0; // No data yet
-                    // Initialize data if not present
-                    setDoc(queueMetadataRef, {
-                        highestQueueNumber: 0,
-                        lastResetDate: getCurrentDate()
-                    }, { merge: true }).catch(e => console.error("Error initializing queue metadata:", e));
+                    highestQueueNumberDisplay.textContent = 0;
+                    // Initialize data if not present (only if it doesn't exist)
+                    const existingDoc = await getDoc(queueMetadataRef); 
+                    if (!existingDoc.exists()) {
+                         await setDoc(queueMetadataRef, {
+                            highestQueueNumber: 0,
+                            lastResetDate: getCurrentDate()
+                        }, { merge: true });
+                    }
                 }
-            }, (error) => {
-                console.error("Error listening to queue metadata:", error);
-                showError("ไม่สามารถดึงข้อมูลคิวล่าสุดได้");
-            });
+            } catch (error) {
+                console.error("Error fetching queue metadata for admin display:", error);
+            }
         }
+
 
         /**
          * Gets the user's current geographical position.
@@ -1198,13 +1187,6 @@
                         where("studentId", "==", studentId),
                         where("registrationDate", "==", currentDate)
                     );
-                    // Firestore transactions only allow reading documents that are explicitly part of the transaction,
-                    // or are read before any writes. For a query, using transaction.get on each doc in the query
-                    // result would be ideal, but getDocs directly on a query inside a transaction can lead to issues.
-                    // The safer approach for this type of check is often to try to create a document with a
-                    // unique ID (e.g., studentId-date) and use setDoc with { merge: false } or { exists: false }
-                    // for atomic creation. However, given the current structure, let's keep it as a read for now,
-                    // acknowledging the trade-off.
                     const querySnapshot = await getDocs(q); // This is a read operation
                     if (!querySnapshot.empty) {
                         // If a duplicate is found, throw an error to abort the transaction.
@@ -1237,13 +1219,12 @@
                 localStorage.setItem(`lastRegistrationDate_${appId}_${deviceId}`, currentDate);
                 showMessage(`คุณได้รับคิวหมายเลข: ${newQueueNumber}`);
                 studentIdInput.value = '';
-                dailyAnswerInput.value = ''; // Clear daily answer input
+                dailyAnswerInput.value = '';
                 
-                // No need to call refreshAndDisplayRegistrationReport() here unless the report is visible
-                // and should update automatically. For manual display, this is skipped.
-                // If report is visible, you might call it to reflect the new registration instantly:
-                if (reportSection.style.display !== 'none') {
-                     refreshAndDisplayRegistrationReport();
+                // If admin report is visible, it should be updated via its own refresh
+                if (reportSection.style.display !== 'none' && isAdminLoggedIn) {
+                     updateHighestQueueNumberDisplayForAdmin(); // Update admin's queue count
+                     refreshAndDisplayRegistrationReport(); // Refresh full report
                 }
 
             } catch (e) {
@@ -1269,8 +1250,7 @@
 
         /**
          * Fetches and displays the registration report for the current day.
-         * This function now primarily updates 'currentRegistrationsData' for export,
-         * and the table display elements are hidden in HTML.
+         * This function now also updates the 'currentQueueInfoDiv' for admin view.
          */
         async function refreshAndDisplayRegistrationReport() {
             if (!authReady) {
@@ -1284,6 +1264,18 @@
 
             const currentDate = getCurrentDate();
             try {
+                // Fetch current queue number for admin view directly here to ensure freshness
+                const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
+                const queueMetadataDoc = await getDoc(queueMetadataRef);
+                if (queueMetadataDoc.exists()) {
+                    const data = queueMetadataDoc.data();
+                    highestQueueNumberDisplay.textContent = data.highestQueueNumber || 0; // Update main display for admin
+                    currentQueueInfoDiv.style.display = 'block'; // Show the queue number for admin
+                } else {
+                    highestQueueNumberDisplay.textContent = 0;
+                    currentQueueInfoDiv.style.display = 'block'; // Still show, but with 0
+                }
+
                 const q = query(
                     collection(db, `artifacts/${appId}/public/data/queueRegistrations`),
                     where("registrationDate", "==", currentDate)
@@ -1451,7 +1443,6 @@
                 if (querySnapshot.empty) {
                     showMessage("ไม่มีข้อมูลคิวให้รีเซ็ตสำหรับวันนี้");
                     showLoading(false);
-                    // No need to fetch and display report if empty
                     return;
                 }
 
@@ -1470,20 +1461,20 @@
                 }, { merge: true });
 
                 showMessage("รีเซ็ตคิวทั้งหมดสำหรับวันนี้สำเร็จแล้ว");
-                // Only refresh display if it's currently visible
-                if (reportSection.style.display !== 'none') {
+                
+                // If admin report is visible, refresh it
+                if (reportSection.style.display !== 'none' && isAdminLoggedIn) {
                     refreshAndDisplayRegistrationReport();
                 } else {
-                    // If not visible, just ensure local data is clear or highest queue is reset
-                    currentRegistrationsData = [];
+                    currentRegistrationsData = []; // Clear local data
+                    highestQueueNumberDisplay.textContent = 0; // Reset display immediately
                 }
             } catch (e) {
                 console.error("Error resetting queues:", e);
                 showError("เกิดข้อผิดพลาดในการรีเซ็ตคิว โปรดลองอีกครั้ง");
             } finally {
                 showLoading(false);
-                hideConfirmationModal(); // Ensure modal is hidden
-                // No need to hide admin panel or toggle buttons here, as they are already visible
+                hideConfirmationModal();
             }
         }
 
@@ -1860,7 +1851,7 @@
                 // If admin was logged in, clicking the question mark again should hide the action buttons
                 if (isAdminLoggedIn) {
                     toggleAdminActionButtons(false);
-                    hideDailyReport(); // Also hide the report if admin buttons are toggled off
+                    hideDailyReport(); // Also hide the report and queue info if admin buttons are toggled off
                 }
             } else { // If admin password panel is hidden
                 if (isAdminLoggedIn) { // If admin is already logged in, just toggle action buttons visibility
@@ -1900,7 +1891,7 @@
                     showPasswordError("Passphrase ไม่ถูกต้อง");
                     isAdminLoggedIn = false;
                     toggleAdminActionButtons(false); // Ensure buttons are hidden on failed login
-                    hideDailyReport(); // Hide report if login fails
+                    hideDailyReport(); // Hide report and queue info if login fails
                 }
                 event.preventDefault();
             }
@@ -1912,10 +1903,10 @@
             if (isAdminLoggedIn) { // Check if admin session is active
                 showLoading(true);
                 // Ensure data is fresh before export, especially if not displayed on screen
-                await refreshAndDisplayRegistrationReport(); // This will fetch and populate currentRegistrationsData
+                await refreshAndDisplayRegistrationReport(); // This will fetch and populate currentRegistrationsData and highestQueueNumberDisplay
                 showLoading(false); // Hide loading after fetch
                 exportRegistrationReportToCsv();
-                hideDailyReport(); // Hide the table after export as per requirement
+                hideDailyReport(); // Hide the table and queue info after export as per requirement
             } else {
                 showAdminPanel(); // Show panel to prompt for password
                 showPasswordError("กรุณากรอก Passphrase ก่อน"); // Prompt message
@@ -1926,7 +1917,7 @@
         toggleImportIdsButton.addEventListener('click', () => {
             hideMessages(); // Clear any previous messages
             if (isAdminLoggedIn) { // Check if admin session is active
-                hideDailyReport(); // Hide daily report if other admin function is opened
+                hideDailyReport(); // Hide daily report and queue info if other admin function is opened
                 showImportStudentIdsModal(); // Show the new import modal
             } else {
                 showAdminPanel(); // Show panel to prompt for password
@@ -1938,7 +1929,7 @@
         toggleViewPreRegButton.addEventListener('click', () => {
             hideMessages(); // Clear any previous messages
             if (isAdminLoggedIn) { // Check if admin session is active
-                hideDailyReport(); // Hide daily report if other admin function is opened
+                hideDailyReport(); // Hide daily report and queue info if other admin function is opened
                 showViewPreRegisteredIdsModal(); // Show the new view/manage modal
             } else {
                 showAdminPanel(); // Show panel to prompt for password
@@ -1955,7 +1946,7 @@
                 } else {
                     hideImportStudentIdsModal(); // Hide other admin modals
                     hideViewPreRegisteredIdsModal(); // Hide other admin modals
-                    refreshAndDisplayRegistrationReport(); // Fetch and show the daily report
+                    refreshAndDisplayRegistrationReport(); // Fetch and show the daily report and queue info
                 }
             } else {
                 showAdminPanel(); // Show panel to prompt for password
@@ -1982,7 +1973,7 @@
                     } else {
                         showError("ไม่สามารถส่งออกข้อมูลได้ จึงไม่ทำการรีเซ็ตคิว"); // Inform user if export failed
                     }
-                    hideDailyReport(); // Always hide the report section after reset attempt
+                    hideDailyReport(); // Always hide the report section and queue info after reset attempt
                 });
             } else {
                 showAdminPanel(); // Show panel to prompt for password
