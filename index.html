@@ -649,8 +649,7 @@
                     <thead>
                         <tr>
                             <th class="w-1/12"><input type="checkbox" id="selectAllPreRegIds"></th> 
-                            <th class="w-6/12">รหัสนักศึกษา</th>
-                            <th class="w-5/12">จัดการ</th> 
+                            <th>รหัสนักศึกษา</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1918,7 +1917,7 @@
                 const row = preRegisteredIdsTableBody.insertRow();
                 row.dataset.studentId = id; 
 
-                // Checkbox cell (Re-added)
+                // Checkbox cell
                 const checkboxCell = row.insertCell();
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
@@ -1931,19 +1930,17 @@
                 const idCell = row.insertCell();
                 idCell.textContent = id;
                 idCell.dataset.originalId = id; 
-
-                // Actions cell - No edit button, just a placeholder if needed.
-                const actionsCell = row.insertCell();
-                actionsCell.className = 'actions';
-                // No buttons appended to actionsCell as per user request (removed edit button)
+                
+                // The 'จัดการ' column is now completely removed from HTML and JS.
             });
         }
 
-        // Removed enableInlineEdit and disableInlineEdit functions as per user request (removed edit button)
-
+        // The enableInlineEdit and disableInlineEdit functions have been removed.
 
         /**
          * Updates a pre-registered student ID in Firestore (deletes old, creates new).
+         * This function is no longer called directly from UI due to removal of edit button.
+         * Kept for potential future use or if other parts of the app rely on it.
          * @param {string} oldId The current student ID.
          * @param {string} newId The new student ID.
          */
