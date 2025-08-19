@@ -641,6 +641,9 @@
     <div id="viewPreRegisteredIdsModal" class="modal">
         <div class="modal-content !max-w-xl"> <!-- Increased max-width for better table display -->
             <h3 class="text-xl font-semibold text-gray-700 mb-2">รายการรหัสนักศึกษาที่ Import แล้ว</h3>
+            <!-- Search Input for Pre-registered IDs -->
+            <input type="text" id="preRegSearchInput" placeholder="ค้นหารหัสนักศึกษา..." class="p-2 border rounded-md w-full mb-4 focus:ring-blue-500 focus:border-blue-500">
+            
             <p id="preRegSummary" class="text-sm text-gray-600 mb-4">จำนวนนักศึกษาทั้งหมด: <span id="totalPreRegisteredStudents">0</span></p>
             <div id="preRegisteredIdsTableContainer">
                 <table id="preRegisteredIdsTable">
@@ -793,7 +796,7 @@
         const selectAllPreRegIdsCheckbox = document.getElementById('selectAllPreRegIds'); // Re-added
         const deleteSelectedPreRegisteredIdsButton = document.getElementById('deleteSelectedPreRegisteredIdsButton'); // Re-added
         const closeViewPreRegModalButton = document.getElementById('closeViewPreRegModalButton');
-
+        const preRegSearchInput = document.getElementById('preRegSearchInput'); // NEW: Search input for pre-registered IDs
 
         // General Confirmation Modal elements (reused for reset, single delete, multi-delete, clear all)
         const confirmationModal = document.getElementById('confirmationModal');
@@ -1103,7 +1106,8 @@
         async function showViewPreRegisteredIdsModal() {
             viewPreRegisteredIdsModal.style.display = 'flex';
             await fetchPreRegisteredIds(); // Fetch data before rendering
-            renderPreRegisteredIdsTable(); // Render table
+            preRegSearchInput.value = ''; // Clear search input on modal open
+            renderPreRegisteredIdsTable(); // Render table with no initial search query
             selectedPreRegIdsForDeletion.clear(); // Clear selections on open (Re-added)
             updateDeleteSelectedButtonState(); // Update button state (Re-added)
             selectAllPreRegIdsCheckbox.checked = false; // Uncheck select all (Re-added)
@@ -1885,16 +1889,25 @@
 
         /**
          * Renders the pre-registered student IDs into the table in the view modal.
+         * @param {string} searchQuery Optional: text to filter the student IDs by.
          */
-        function renderPreRegisteredIdsTable() {
+        function renderPreRegisteredIdsTable(searchQuery = '') {
             preRegisteredIdsTableBody.innerHTML = ''; 
             selectedPreRegIdsForDeletion.clear(); // Re-added
             selectAllPreRegIdsCheckbox.checked = false; // Re-added
             updateDeleteSelectedButtonState(); // Re-added
 
-            totalPreRegisteredStudentsSpan.textContent = preRegisteredStudentsData.length;
+            let filteredData = preRegisteredStudentsData;
+            if (searchQuery) {
+                const lowerCaseQuery = searchQuery.toLowerCase();
+                filteredData = preRegisteredStudentsData.filter(id =>
+                    id.toLowerCase().includes(lowerCaseQuery)
+                );
+            }
 
-            if (preRegisteredStudentsData.length === 0) {
+            totalPreRegisteredStudentsSpan.textContent = filteredData.length;
+
+            if (filteredData.length === 0) {
                 noPreRegDataMessagePreReg.classList.remove('hidden');
                 preRegisteredIdsTableContainer.classList.add('hidden'); 
                 return;
@@ -1903,7 +1916,7 @@
                 preRegisteredIdsTableContainer.classList.remove('hidden'); 
             }
 
-            preRegisteredStudentsData.forEach(id => {
+            filteredData.forEach(id => { // Use filteredData here
                 const row = preRegisteredIdsTableBody.insertRow();
                 row.dataset.studentId = id; 
 
@@ -1980,7 +1993,7 @@
                 showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการเปลี่ยนรหัสนักศึกษา ${originalId} เป็น ${newId}?`, async () => {
                     await updatePreRegisteredId(originalId, newId);
                     await fetchPreRegisteredIds(); 
-                    renderPreRegisteredIdsTable(); 
+                    renderPreRegisteredIdsTable(preRegSearchInput.value.trim()); // Re-render with current search query
                     showMessage(`แก้ไขรหัสนักศึกษา ${originalId} เป็น ${newId} สำเร็จ`);
                 });
             });
@@ -2098,7 +2111,7 @@
                 showMessage(`ลบนักศึกษาที่เลือกจำนวน ${idsToDelete.size} รายการสำเร็จ`);
                 selectedPreRegIdsForDeletion.clear(); // Re-added
                 await fetchPreRegisteredIds(); 
-                renderPreRegisteredIdsTable();
+                renderPreRegisteredIdsTable(preRegSearchInput.value.trim()); // Re-render with current search query
             }
             catch (e) {
                 console.error("Error deleting selected pre-registered IDs:", e);
@@ -2422,6 +2435,11 @@
             } else {
                 showMessage("โปรดเลือกรหัสนักศึกษาที่ต้องการลบก่อน");
             }
+        });
+
+        // NEW: Event listener for the search input in the pre-registered IDs modal
+        preRegSearchInput.addEventListener('input', () => {
+            renderPreRegisteredIdsTable(preRegSearchInput.value.trim());
         });
     </script>
 </body>
