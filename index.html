@@ -173,7 +173,6 @@
         }
         .report-loading-indicator {
             display: none; /* ซ่อนไว้ตามค่าเริ่มต้น */
-            text-align: center;
             margin-top: 20px;
             font-size: 0.9rem;
             color: #6b7280;
@@ -478,15 +477,16 @@
             justify-content: center;
             align-items: center;
         }
-        #preRegisteredIdsTable td.actions .edit-input {
-            width: calc(100% - 70px); /* Adjust width to make space for buttons */
+        /* Removed edit-input specific style */
+        /* #preRegisteredIdsTable td.actions .edit-input {
+            width: calc(100% - 70px); 
             display: inline-block;
             margin-right: 5px;
             padding: 4px 8px;
             font-size: 0.85rem;
             border-radius: 4px;
             border: 1px solid #ccc;
-        }
+        } */
         #deleteSelectedPreRegisteredIdsButton,
         #clearAllPreRegisteredIdsButton {
             margin-top: 20px;
@@ -529,13 +529,25 @@
             text-align: center;
             display: none; /* Hidden by default */
         }
+        /* Styles for text input in confirmation modal */
+        #confirmationTextInput {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center; /* Center the text for typing confirmation */
+            box-sizing: border-box; /* Include padding in width */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- New Headline -->
         <p class="text-2xl font-bold text-gray-700 mb-2">CA033 : Idea Generation Workshop and Agile Management</p>
-        <h1 class="text-4xl font-extrabold text-gray-800 mb-6">ระบบเช็คชื่อ และ รับหมายเลขผู้เรียน</h1>
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-6">ระบบแจกหมายเลขผู้เรียน</h1>
         
         <!-- Form status message -->
         <div id="formStatusMessage" class="form-status-message">
@@ -579,7 +591,7 @@
 
         <!-- ส่วนสำหรับรายงานการลงทะเบียน - ซ่อนตารางและจะแสดงเมื่อผู้ดูแลระบบกดปุ่มเท่านั้น -->
         <div id="reportSection" class="report-section" style="display: none;">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">ลำดับหมายเลขผู้เรียนประจำวัน</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">สรุปหมายเลขผู้เรียนประจำวัน</h2>
             
             <div class="mb-4 flex items-center justify-center space-x-4">
                 <label for="sessionSelect" class="font-semibold text-gray-700">เลือกรอบรายงาน:</label>
@@ -616,10 +628,12 @@
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal (For Reset) -->
+    <!-- Custom Confirmation Modal (For Reset and Delete Report) -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <p id="confirmationModalMessage" class="text-lg font-semibold mb-4">ต้องการดำเนินการต่อ?</p>
+            <input type="text" id="confirmationTextInput" class="hidden" placeholder="พิมพ์ 'ยืนยันการลบ' เพื่อดำเนินการ">
+            <span id="confirmationTextError" class="password-error-message hidden"></span>
             <div class="modal-buttons">
                 <button id="confirmActionButton" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg">ยืนยัน</button>
                 <button id="cancelActionButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg">ยกเลิก</button>
@@ -816,6 +830,8 @@
         // General Confirmation Modal elements (reused for reset, single delete, multi-delete, clear all)
         const confirmationModal = document.getElementById('confirmationModal');
         const confirmationModalMessage = document.getElementById('confirmationModalMessage');
+        const confirmationTextInput = document.getElementById('confirmationTextInput'); // NEW
+        const confirmationTextError = document.getElementById('confirmationTextError');   // NEW
         const confirmActionButton = document.getElementById('confirmActionButton');
         const cancelActionButton = document.getElementById('cancelActionButton');
 
@@ -855,7 +871,6 @@
                 // Initialize current session ID on app load, and apply initial form status
                 await initializeCurrentSessionId();
                 // Removed setupFormStatusListener() to achieve true client-side behavior
-                // setupFormStatusListener(); 
 
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
@@ -1043,12 +1058,37 @@
          * Shows the general confirmation modal.
          * @param {string} message The message to display.
          * @param {Function} confirmCallback Function to call on confirm.
+         * @param {string} [requiredTextForConfirmation=''] Optional text that must be typed for confirmation.
          */
-        function showConfirmationModal(message, confirmCallback) {
+        function showConfirmationModal(message, confirmCallback, requiredTextForConfirmation = '') {
             confirmationModalMessage.textContent = message;
+            confirmationTextError.classList.add('hidden'); // Hide previous error
+            
+            if (requiredTextForConfirmation) {
+                confirmationTextInput.classList.remove('hidden');
+                confirmationTextInput.value = '';
+                confirmationTextInput.placeholder = `พิมพ์ '${requiredTextForConfirmation}' เพื่อยืนยัน`;
+                confirmationTextInput.focus();
+            } else {
+                confirmationTextInput.classList.add('hidden');
+                confirmationTextInput.value = '';
+            }
+
             confirmActionButton.onclick = async () => {
-                await confirmCallback();
-                hideConfirmationModal();
+                if (requiredTextForConfirmation) {
+                    if (confirmationTextInput.value.trim() === requiredTextForConfirmation) {
+                        confirmationTextError.classList.add('hidden');
+                        await confirmCallback();
+                        hideConfirmationModal();
+                    } else {
+                        confirmationTextError.textContent = `ข้อความไม่ตรงกัน โปรดพิมพ์ '${requiredTextForConfirmation}'`;
+                        confirmationTextError.classList.remove('hidden');
+                        confirmationTextInput.focus(); // Keep focus on the input
+                    }
+                } else {
+                    await confirmCallback();
+                    hideConfirmationModal();
+                }
             };
             cancelActionButton.onclick = hideConfirmationModal;
             confirmationModal.style.display = 'flex';
@@ -1059,6 +1099,9 @@
          */
         function hideConfirmationModal() {
             confirmationModal.style.display = 'none';
+            confirmationTextInput.classList.add('hidden'); // Ensure hidden on close
+            confirmationTextError.classList.add('hidden'); // Ensure hidden on close
+            confirmationTextInput.value = ''; // Clear value on close
         }
 
         /**
@@ -1208,26 +1251,7 @@
                 console.error("Error fetching queue metadata for admin display:", error);
             }
         }
-
-        // Removed the setupFormStatusListener as per client-side control request.
-        // The form status will now only update on initial page load or manual refresh.
-        /*
-        function setupFormStatusListener() {
-            const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
-            onSnapshot(queueMetadataRef, (docSnap) => {
-                let isFormOpen = true; // Default to open
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    isFormOpen = data.isRegistrationFormOpen !== undefined ? data.isRegistrationFormOpen : true;
-                }
-                updateFormUI(isFormOpen);
-            }, (error) => {
-                console.error("Error listening to form status:", error);
-                // Optionally show a message to the user that real-time updates might be failing
-            });
-        }
-        */
-
+        
         /**
          * Updates the student registration form's UI based on its open/closed status.
          * @param {boolean} isOpen True if the form should be open, false if closed.
@@ -1894,15 +1918,18 @@
                 idCell.textContent = id;
                 idCell.dataset.originalId = id; 
 
-                // Actions cell
+                // Actions cell - Only delete button
                 const actionsCell = row.insertCell();
                 actionsCell.className = 'actions';
 
+                // Removed Edit Button:
+                /*
                 const editButton = document.createElement('button');
                 editButton.className = 'bg-yellow-500 hover:bg-yellow-600 text-white rounded-md';
                 editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>';
                 editButton.title = 'แก้ไข';
                 editButton.addEventListener('click', () => enableInlineEdit(row, id));
+                */
 
                 const deleteButton = document.createElement('button');
                 deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white rounded-md';
@@ -1915,16 +1942,13 @@
                     showMessage(`ลบนักศึกษา ${id} สำเร็จ`);
                 }));
 
-                actionsCell.appendChild(editButton);
+                // actionsCell.appendChild(editButton); // Removed
                 actionsCell.appendChild(deleteButton);
             });
         }
 
-        /**
-         * Enables inline editing for a specific row in the pre-registered IDs table.
-         * @param {HTMLTableRowElement} row The table row to enable editing for.
-         * @param {string} originalId The original student ID of the row.
-         */
+        // Removed enableInlineEdit and disableInlineEdit functions as they are no longer needed
+        /*
         function enableInlineEdit(row, originalId) {
             const idCell = row.cells[1]; 
             const actionsCell = row.cells[2]; 
@@ -1987,11 +2011,6 @@
             inputField.focus(); 
         }
 
-        /**
-         * Disables inline editing for a specific row and restores original content/buttons.
-         * @param {HTMLTableRowElement} row The table row to disable editing for.
-         * @param {string} studentId The student ID to restore.
-         */
         function disableInlineEdit(row, studentId) {
             const idCell = row.cells[1];
             const actionsCell = row.cells[2];
@@ -2020,6 +2039,7 @@
             actionsCell.appendChild(editButton);
             actionsCell.appendChild(deleteButton);
         }
+        */
 
         /**
          * Updates a pre-registered student ID in Firestore (deletes old, creates new).
@@ -2331,9 +2351,13 @@
 
             // Find the session name for confirmation message
             const selectedOptionText = sessionSelect.options[sessionSelect.selectedIndex].textContent;
-            showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรายงานรอบ: "${selectedOptionText}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`, async () => {
-                await deleteReportSession(selectedSessionId);
-            });
+            showConfirmationModal(
+                `คุณแน่ใจหรือไม่ที่ต้องการลบรายงานรอบ: "${selectedOptionText}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+                async () => {
+                    await deleteReportSession(selectedSessionId);
+                },
+                "ยืนยันการลบ" // Require this text for confirmation
+            );
         });
 
         // NEW: Handle click on Toggle Form Visibility Button
