@@ -402,6 +402,22 @@
             background-color: #d97706; /* Darker amber on hover */
         }
 
+        /* New Floating Toggle Form Button */
+        #fixedToggleFormButtonContainer {
+            position: fixed;
+            bottom: 20px;
+            left: 320px; /* Positioned to the right of Daily Report button */
+            z-index: 999;
+            display: none; /* Hidden by default, shown by JS */
+        }
+        #toggleFormVisibilityButton { /* Specific style for Toggle Form button */
+            background-color: #6d28d9; /* Deep Purple */
+            color: #fff;
+        }
+        #toggleFormVisibilityButton:hover {
+            background-color: #5b21b6; /* Darker Purple on hover */
+        }
+
 
         #fixedResetButtonContainer {
             position: fixed;
@@ -496,6 +512,23 @@
         #confirmationModal {
             z-index: 2000;
         }
+
+        /* New styles for form open/closed states */
+        .form-closed-overlay {
+            opacity: 0.5; /* Dim the form */
+            pointer-events: none; /* Disable all clicks/interactions */
+        }
+        .form-status-message {
+            background-color: #fef08a; /* Yellow-200 */
+            color: #b45309; /* Amber-700 */
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
     </style>
 </head>
 <body>
@@ -503,26 +536,36 @@
         <!-- New Headline -->
         <p class="text-2xl font-bold text-gray-700 mb-2">CA033 : Idea Generation Workshop and Agile Management</p>
         <h1 class="text-4xl font-extrabold text-gray-800 mb-6">ระบบเช็คชื่อ และ รับหมายเลขผู้เรียน</h1>
-        <p class="text-xl font-bold text-gray-600 mb-2">กรอกรหัสนักศึกษา และตอบคำถามประจำวัน</p>
-        <p class="text-gray-600 mb-6 text-sm">เพื่อรับหมายเลขประจำตัวผู้เรียนประจำวันนี้ เพื่อใช้ในการทำ Workshop</p>
-
-        <!-- Input fields section: student ID and daily answer -->
-        <div class="mb-4 flex flex-wrap -mx-2 items-end">
-            <!-- Student ID input (left column) -->
-            <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0"> <!-- Added mb-4 for vertical spacing -->
-                <label for="studentIdInput" class="block text-blue-700 text-lg font-bold mb-2">รหัสนักศึกษา:</label>
-                <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักศึกษา เช่น 1660312345" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
-            </div>
-            <!-- Daily Question/Answer input (right column) -->
-            <div class="w-full md:w-1/2 px-2">
-                <label for="dailyAnswerInput" class="block text-blue-700 text-lg font-bold mb-2">คำถามประจำวันนี้?:</label>
-                <input type="text" id="dailyAnswerInput" placeholder="กรอกคำตอบ" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
-            </div>
+        
+        <!-- Form status message -->
+        <div id="formStatusMessage" class="form-status-message">
+            การลงทะเบียนปิดอยู่ โปรดรอการเปิดรอบถัดไป
         </div>
 
-        <button id="registerButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 md:py-2 md:px-4 md:text-base" disabled>
-            ลงทะเบียนรับหมายเลขผู้เรียนประจำวัน
-        </button>
+        <!-- Student form container to toggle visibility/interaction -->
+        <div id="studentFormContainer">
+            <p class="text-xl font-bold text-gray-600 mb-2">กรอกรหัสนักศึกษา และตอบคำถามประจำวัน</p>
+            <p class="text-gray-600 mb-6 text-sm">เพื่อรับหมายเลขประจำตัวผู้เรียนประจำวันนี้ เพื่อใช้ในการทำ Workshop</p>
+
+            <!-- Input fields section: student ID and daily answer -->
+            <div class="mb-4 flex flex-wrap -mx-2 items-end">
+                <!-- Student ID input (left column) -->
+                <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0"> <!-- Added mb-4 for vertical spacing -->
+                    <label for="studentIdInput" class="block text-blue-700 text-lg font-bold mb-2">รหัสนักศึกษา:</label>
+                    <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักศึกษา เช่น 1660312345" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
+                </div>
+                <!-- Daily Question/Answer input (right column) -->
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="dailyAnswerInput" class="block text-blue-700 text-lg font-bold mb-2">คำถามประจำวันนี้?:</label>
+                    <input type="text" id="dailyAnswerInput" placeholder="กรอกคำตอบ" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
+                </div>
+            </div>
+
+            <button id="registerButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 md:py-2 md:px-4 md:text-base" disabled>
+                ลงทะเบียนรับหมายเลขผู้เรียนประจำวัน
+            </button>
+        </div>
+        
 
         <div id="messageDisplay" class="message-box hidden">
             <!-- ข้อความจะแสดงที่นี่ -->
@@ -672,6 +715,13 @@
         </button>
     </div>
 
+    <!-- New Floating Toggle Form Button -->
+    <div id="fixedToggleFormButtonContainer">
+        <button id="toggleFormVisibilityButton" class="floating-icon-button" title="สลับสถานะเปิด/ปิดฟอร์ม">
+            <i class="fas fa-lock-open"></i> <!-- Default icon: Open lock -->
+        </button>
+    </div>
+
 
     <!-- New Floating Reset Button (Smiling Face Icon) -->
     <div id="fixedResetButtonContainer">
@@ -685,18 +735,18 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // MANDATORY: Use __firebase_config from the Canvas environment
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { 
-            apiKey: "AIzaSyDSHO-N-kX8CRNPv0z9WMK0AfdiAa5_PRA",
-            authDomain: "queue-app2.firebaseapp.com",
-            projectId: "queue-app2",
-            storageBucket: "queue-app2.firebasestorage.app",
-            messagingSenderId: "431996014467",
-            appId: "1:431996014467:web:8c9ab7cfdde6d3b27f70b6",
-            measurementId: "G-N26VFDKR6L"
+            apiKey: "AIzaSyA7OgbR00tGMjrQXAOtLUX34y8sXulK-5s",
+            authDomain: "queue-app-72e53.firebaseapp.com",
+            projectId: "queue-app-72e53",
+            storageBucket: "queue-app-72e53.firebasestorage.app",
+            messagingSenderId: "457625398149",
+            appId: "1:457625398149:web:2752c4993e1ced324172ec",
+            measurementId: "G-BHFP0TNYY3"
         };
         // MANDATORY: Use __app_id for the app ID
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; // Fallback to projectId if __app_id is not defined
@@ -725,6 +775,12 @@
         const currentQueueInfoDiv = document.getElementById('currentQueueInfo'); // Reference to the queue info div
         const sessionSelect = document.getElementById('sessionSelect'); // New dropdown for sessions
         const viewSelectedReportButton = document.getElementById('viewSelectedReportButton'); // New button to view selected report
+
+        // NEW UI elements for form open/close
+        const studentFormContainer = document.getElementById('studentFormContainer');
+        const formStatusMessage = document.getElementById('formStatusMessage');
+        const toggleFormVisibilityButton = document.getElementById('toggleFormVisibilityButton');
+        const toggleFormVisibilityButtonIcon = toggleFormVisibilityButton.querySelector('i'); // Get the icon
 
         // Admin UI elements
         const adminPanelContainer = document.getElementById('adminPanelContainer');
@@ -780,7 +836,6 @@
         // Ensure __initial_auth_token is defined or defaults to undefined
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
 
-
         // --- Firebase Authentication ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -788,7 +843,7 @@
                 authReady = true;
                 console.log("Firebase authenticated. User ID:", currentUserId);
                 // Enable user-facing buttons when Firebase is ready
-                registerButton.disabled = false;
+                // registerButton.disabled = false; // Initial state will be set by form status listener
                 
                 // Ensure admin action buttons and panel/report are hidden on initial load
                 toggleAdminActionButtons(false);
@@ -799,6 +854,8 @@
 
                 // Initialize current session ID on app load
                 await initializeCurrentSessionId();
+                // Set up real-time listener for form status
+                setupFormStatusListener();
 
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
@@ -871,6 +928,7 @@
                 errorDisplay.classList.add('hidden'); // Hide any error messages
                 passwordErrorDisplay.classList.add('hidden'); // Hide password error
                 preRegSaveErrorDisplayModal.classList.add('hidden'); // Hide pre-reg save error
+                formStatusMessage.classList.add('hidden'); // Hide form status message
 
                 if (registrationDetails && registrationDetails.queueNumber !== null && 
                     registrationDetails.studentId !== null && 
@@ -915,6 +973,7 @@
             messageDisplay.classList.add('hidden'); // Hide any success messages
             passwordErrorDisplay.classList.add('hidden'); // Hide password error
             preRegSaveErrorDisplayModal.classList.add('hidden'); // Hide pre-reg save error
+            formStatusMessage.classList.add('hidden'); // Hide form status message
         }
 
         /**
@@ -1080,6 +1139,7 @@
             document.getElementById('fixedImportButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedViewPreRegButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedDailyReportButtonContainer').style.display = show ? 'flex' : 'none'; // New button
+            document.getElementById('fixedToggleFormButtonContainer').style.display = show ? 'flex' : 'none'; // NEW Toggle Form Button
             document.getElementById('fixedResetButtonContainer').style.display = show ? 'flex' : 'none';
         }
 
@@ -1112,7 +1172,8 @@
                         highestQueueNumber: 0,
                         lastResetDate: getCurrentDate(),
                         currentSessionId: currentActiveSessionId,
-                        sessionStartTime: serverTimestamp() // Record start time for the first session
+                        sessionStartTime: serverTimestamp(), // Record start time for the first session
+                        isRegistrationFormOpen: true // Initialize form as open by default
                     });
                 }
             } catch (error) {
@@ -1140,6 +1201,51 @@
                 }
             } catch (error) {
                 console.error("Error fetching queue metadata for admin display:", error);
+            }
+        }
+
+        /**
+         * Sets up a real-time listener for the form's open/close status in Firestore.
+         * This will update the UI on all connected clients immediately.
+         */
+        function setupFormStatusListener() {
+            const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
+            onSnapshot(queueMetadataRef, (docSnap) => {
+                let isFormOpen = true; // Default to open
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    isFormOpen = data.isRegistrationFormOpen !== undefined ? data.isRegistrationFormOpen : true;
+                }
+                updateFormUI(isFormOpen);
+            }, (error) => {
+                console.error("Error listening to form status:", error);
+                // Optionally show a message to the user that real-time updates might be failing
+            });
+        }
+
+        /**
+         * Updates the student registration form's UI based on its open/closed status.
+         * @param {boolean} isOpen True if the form should be open, false if closed.
+         */
+        function updateFormUI(isOpen) {
+            if (isOpen) {
+                studentFormContainer.classList.remove('form-closed-overlay');
+                studentIdInput.disabled = false;
+                dailyAnswerInput.disabled = false;
+                registerButton.disabled = false;
+                formStatusMessage.classList.add('hidden');
+                toggleFormVisibilityButtonIcon.classList.remove('fa-lock');
+                toggleFormVisibilityButtonIcon.classList.add('fa-lock-open');
+                toggleFormVisibilityButton.title = 'สลับสถานะ: ปิดฟอร์ม';
+            } else {
+                studentFormContainer.classList.add('form-closed-overlay');
+                studentIdInput.disabled = true;
+                dailyAnswerInput.disabled = true;
+                registerButton.disabled = true;
+                formStatusMessage.classList.remove('hidden');
+                toggleFormVisibilityButtonIcon.classList.remove('fa-lock-open');
+                toggleFormVisibilityButtonIcon.classList.add('fa-lock');
+                toggleFormVisibilityButton.title = 'สลับสถานะ: เปิดฟอร์ม';
             }
         }
 
@@ -1250,7 +1356,7 @@
                     } else {
                         currentActiveSessionId = getUniqueSessionId();
                         sessionStartTime = new Date(); 
-                        transaction.set(queueMetadataRef, { currentSessionId: currentActiveSessionId, highestQueueNumber: 0, sessionStartTime: serverTimestamp() }, { merge: true });
+                        transaction.set(queueMetadataRef, { currentSessionId: currentActiveSessionId, highestQueueNumber: 0, sessionStartTime: serverTimestamp(), isRegistrationFormOpen: true }, { merge: true });
                     }
                     
                     // Update the global currentHighestQueueNumber here for consistency after transaction
@@ -1354,12 +1460,14 @@
                 let previousHighestQueueNumber = 0;
                 let oldSessionId = null;
                 let sessionStartTime = null;
+                let isFormOpenStatus = true; // Preserve current form open status
 
                 if (queueMetadataDoc.exists()) {
                     const data = queueMetadataDoc.data();
                     previousHighestQueueNumber = data.highestQueueNumber || 0;
                     oldSessionId = data.currentSessionId || currentActiveSessionId;
                     sessionStartTime = data.sessionStartTime;
+                    isFormOpenStatus = data.isRegistrationFormOpen !== undefined ? data.isRegistrationFormOpen : true;
                 } else {
                     oldSessionId = currentActiveSessionId;
                     sessionStartTime = serverTimestamp(); 
@@ -1384,7 +1492,8 @@
                     highestQueueNumber: 0,
                     lastResetDate: getCurrentDate(), 
                     currentSessionId: newSessionId,
-                    sessionStartTime: serverTimestamp() 
+                    sessionStartTime: serverTimestamp(), 
+                    isRegistrationFormOpen: isFormOpenStatus // Preserve form open status for new session
                 }, { merge: true });
 
                 currentActiveSessionId = newSessionId; 
@@ -2220,6 +2329,37 @@
             showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรายงานรอบ: "${selectedOptionText}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`, async () => {
                 await deleteReportSession(selectedSessionId);
             });
+        });
+
+        // NEW: Handle click on Toggle Form Visibility Button
+        toggleFormVisibilityButton.addEventListener('click', async () => {
+            if (!isAdminLoggedIn) {
+                showAdminPanel();
+                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                return;
+            }
+            
+            showLoading(true);
+            hideMessages();
+
+            try {
+                const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
+                const docSnap = await getDoc(queueMetadataRef);
+                let currentStatus = true;
+                if (docSnap.exists()) {
+                    currentStatus = docSnap.data().isRegistrationFormOpen !== undefined ? docSnap.data().isRegistrationFormOpen : true;
+                }
+
+                const newStatus = !currentStatus;
+                await setDoc(queueMetadataRef, { isRegistrationFormOpen: newStatus }, { merge: true });
+
+                showMessage(`ฟอร์มลงทะเบียน: ${newStatus ? 'เปิด' : 'ปิด'} แล้ว`);
+            } catch (e) {
+                console.error("Error toggling form visibility:", e);
+                showError("เกิดข้อผิดพลาดในการเปลี่ยนสถานะฟอร์ม โปรดลองอีกครั้ง");
+            } finally {
+                showLoading(false);
+            }
         });
 
 
