@@ -832,9 +832,10 @@
 
         /**
          * Displays a success message to the user.
-         * @param {string} message Message to display.
+         * @param {string} message General message to display.
+         * @param {object} [registrationDetails=null] Optional object with studentId, queueNumber, dailyAnswer, and timestamp.
          */
-        function showMessage(message) {
+        function showMessage(message, registrationDetails = null) {
             // Only use messageDisplay for general app messages, not admin login status
             if (!message.includes("เข้าสู่ระบบผู้ดูแลระบบสำเร็จ")) {
                 messageDisplay.classList.remove('hidden', 'error-message');
@@ -843,11 +844,26 @@
                 passwordErrorDisplay.classList.add('hidden'); // Hide password error
                 preRegSaveErrorDisplayModal.classList.add('hidden'); // Hide pre-reg save error
 
-                // Check if it's the specific registration success message
-                if (message.startsWith("คุณได้รับคิวหมายเลข:")) {
-                    const queueNumber = message.split(":")[1].trim(); // Extract the number
-                    // Set innerHTML to apply separate styling to the number
-                    messageDisplay.innerHTML = `<span class="queue-text">คุณได้รับลำดับผู้เรียนหมายเลข :</span> <span class="queue-number-display">${queueNumber}</span>`;
+                if (registrationDetails && registrationDetails.queueNumber !== null && 
+                    registrationDetails.studentId !== null && 
+                    registrationDetails.dailyAnswer !== null && 
+                    registrationDetails.timestamp !== null) {
+                    
+                    const dateTimeString = registrationDetails.timestamp.toLocaleString('th-TH', {
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    });
+
+                    // Construct the detailed message HTML
+                    messageDisplay.innerHTML = `
+                        <p class="queue-text">คุณได้รับลำดับผู้เรียนหมายเลข :</p>
+                        <p class="queue-number-display">${registrationDetails.queueNumber}</p>
+                        <p class="text-sm text-gray-700 mt-2">
+                            <span class="font-semibold">วัน-เวลา:</span> ${dateTimeString}<br>
+                            <span class="font-semibold">รหัสนักศึกษา:</span> ${registrationDetails.studentId}<br>
+                            <span class="font-semibold">คำตอบประจำวัน:</span> ${registrationDetails.dailyAnswer}
+                        </p>
+                    `;
                     messageDisplay.classList.add('highlight-success-message'); // Apply general highlight styles
                 } else {
                     messageDisplay.textContent = message;
@@ -1115,6 +1131,7 @@
 
             const studentId = studentIdInput.value.trim();
             const dailyAnswer = dailyAnswerInput.value.trim(); // Get the daily answer
+            const registrationTimeClient = new Date(); // Capture client-side timestamp for display
 
             // Validate studentId for 10 digits and numeric content
             if (studentId.length !== 10 || isNaN(studentId)) {
@@ -1207,7 +1224,7 @@
                         registrationDate: currentDate,
                         dailyAnswer: dailyAnswer, // Include the daily answer
                         deviceId: deviceId,
-                        timestamp: serverTimestamp(),
+                        timestamp: serverTimestamp(), // Use server timestamp for accuracy in DB
                         latitude: latitude,
                         longitude: longitude
                     });
@@ -1217,7 +1234,17 @@
 
                 // If we reach here, the transaction was successful and newQueueNumber is valid
                 localStorage.setItem(`lastRegistrationDate_${appId}_${deviceId}`, currentDate);
-                showMessage(`คุณได้รับคิวหมายเลข: ${newQueueNumber}`);
+                
+                // Show detailed registration message
+                showMessage(
+                    `คุณได้รับคิวหมายเลข: ${newQueueNumber}`,
+                    {
+                        queueNumber: newQueueNumber,
+                        studentId: studentId,
+                        dailyAnswer: dailyAnswer,
+                        timestamp: registrationTimeClient // Use client-side timestamp for immediate display
+                    }
+                );
                 studentIdInput.value = '';
                 dailyAnswerInput.value = '';
                 
@@ -1822,7 +1849,8 @@
                 selectedPreRegIdsForDeletion.clear(); // Clear selections
                 await fetchPreRegisteredIds(); // Re-fetch and re-render table
                 renderPreRegisteredIdsTable();
-            } catch (e) {
+            }
+            catch (e) {
                 console.error("Error deleting selected pre-registered IDs:", e);
                 showError("เกิดข้อผิดพลาดในการลบรายชื่อนักศึกษาที่เลือก");
             } finally {
