@@ -1618,8 +1618,13 @@
                     }
 
                     noReportDataMessage.classList.add('hidden');
+                    leftTableContainer.style.display = 'block'; // Ensure they are visible
+                    rightTableContainer.style.display = 'block';
                 } else {
+                    // If no data, hide the table containers and show the message
                     noReportDataMessage.classList.remove('hidden');
+                    leftTableContainer.style.display = 'none';
+                    rightTableContainer.style.display = 'none';
                 }
                 reportSection.style.display = 'block'; 
             } catch (e) {
