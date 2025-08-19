@@ -173,7 +173,6 @@
         }
         .report-loading-indicator {
             display: none; /* ซ่อนไว้ตามค่าเริ่มต้น */
-            text-align: center;
             margin-top: 20px;
             font-size: 0.9rem;
             color: #6b7280;
@@ -225,7 +224,7 @@
         #adminPanelContainer {
             position: fixed;
             bottom: 20px;
-            left: 80px; /* Adjusted position to be slightly to the right of export button */
+            left: 80px; /* Adjusted position to be slightly to the right of toggle button */
             z-index: 998; /* Below the toggle button, but above content */
             background-color: #fffbeb;
             padding: 15px;
@@ -340,26 +339,11 @@
             visibility: visible;
         }
 
-
-        #fixedExportButtonContainer {
+        /* New Floating Import Button (Import Icon) */
+        #fixedImportButtonContainer { 
             position: fixed;
             bottom: 20px;
             left: 80px; /* Positioned next to admin toggle button */
-            z-index: 999;
-            display: none; /* Hidden by default, shown by JS */
-        }
-        #toggleExportReportButton { /* Specific style for Save button */
-            background-color: #9ca3af; /* A subtle blue-gray */
-            color: #fff;
-        }
-        #toggleExportReportButton:hover {
-            background-color: #6b7280; /* Darker gray on hover */
-        }
-
-        #fixedImportButtonContainer { /* New Import button container */
-            position: fixed;
-            bottom: 20px;
-            left: 140px; /* Positioned to the right of Export button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -374,7 +358,7 @@
         #fixedViewPreRegButtonContainer { /* New View Pre-reg button container */
             position: fixed;
             bottom: 20px;
-            left: 200px; /* Positioned to the right of Import button */
+            left: 140px; /* Positioned to the right of Import button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -390,7 +374,7 @@
         #fixedDailyReportButtonContainer {
             position: fixed;
             bottom: 20px;
-            left: 260px; /* Positioned to the right of View Pre-reg button */
+            left: 200px; /* Positioned to the right of View Pre-reg button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -400,6 +384,22 @@
         }
         #toggleDailyReportButton:hover {
             background-color: #d97706; /* Darker amber on hover */
+        }
+
+        /* New Floating Toggle Form Button */
+        #fixedToggleFormButtonContainer {
+            position: fixed;
+            bottom: 20px;
+            left: 260px; /* Positioned to the right of Daily Report button */
+            z-index: 999;
+            display: none; /* Hidden by default, shown by JS */
+        }
+        #toggleFormVisibilityButton { /* Specific style for Toggle Form button */
+            background-color: #6d28d9; /* Deep Purple */
+            color: #fff;
+        }
+        #toggleFormVisibilityButton:hover {
+            background-color: #5b21b6; /* Darker Purple on hover */
         }
 
 
@@ -448,28 +448,19 @@
         .report-table tbody tr:hover {
             background-color: #f0f0f0;
         }
-        #preRegisteredIdsTable td.actions {
-            white-space: nowrap; /* Prevent buttons from wrapping */
+        #preRegisteredIdsTable td.actions { /* Re-added actions cell style */
+            white-space: nowrap;
             text-align: center;
         }
-        #preRegisteredIdsTable td.actions button {
-            width: 32px; /* Fixed width for icon buttons */
-            height: 32px; /* Fixed height for icon buttons */
+        #preRegisteredIdsTable td.actions button { /* Re-added button style */
+            width: 32px;
+            height: 32px;
             padding: 0;
             font-size: 0.9rem;
-            margin: 0 4px; /* Small margin between action buttons */
-            display: inline-flex; /* Align icon nicely */
+            margin: 0 4px;
+            display: inline-flex;
             justify-content: center;
             align-items: center;
-        }
-        #preRegisteredIdsTable td.actions .edit-input {
-            width: calc(100% - 70px); /* Adjust width to make space for buttons */
-            display: inline-block;
-            margin-right: 5px;
-            padding: 4px 8px;
-            font-size: 0.85rem;
-            border-radius: 4px;
-            border: 1px solid #ccc;
         }
         #deleteSelectedPreRegisteredIdsButton,
         #clearAllPreRegisteredIdsButton {
@@ -496,33 +487,72 @@
         #confirmationModal {
             z-index: 2000;
         }
+
+        /* New styles for form open/closed states */
+        .form-closed-overlay {
+            opacity: 0.5; /* Dim the form */
+            pointer-events: none; /* Disable all clicks/interactions */
+        }
+        .form-status-message {
+            background-color: #fef08a; /* Yellow-200 */
+            color: #b45309; /* Amber-700 */
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        /* Styles for text input in confirmation modal */
+        #confirmationTextInput {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            text-align: center; /* Center the text for typing confirmation */
+            box-sizing: border-box; /* Include padding in width */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- New Headline -->
         <p class="text-2xl font-bold text-gray-700 mb-2">CA033 : Idea Generation Workshop and Agile Management</p>
-        <h1 class="text-4xl font-extrabold text-gray-800 mb-6">ระบบเช็คชื่อ และ รับหมายเลขผู้เรียน</h1>
-        <p class="text-xl font-bold text-gray-600 mb-2">กรอกรหัสนักศึกษา และตอบคำถามประจำวัน</p>
-        <p class="text-gray-600 mb-6 text-sm">เพื่อรับหมายเลขประจำตัวผู้เรียนประจำวันนี้ เพื่อใช้ในการทำ Workshop</p>
-
-        <!-- Input fields section: student ID and daily answer -->
-        <div class="mb-4 flex flex-wrap -mx-2 items-end">
-            <!-- Student ID input (left column) -->
-            <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0"> <!-- Added mb-4 for vertical spacing -->
-                <label for="studentIdInput" class="block text-blue-700 text-lg font-bold mb-2">รหัสนักศึกษา:</label>
-                <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักศึกษา เช่น 1660312345" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
-            </div>
-            <!-- Daily Question/Answer input (right column) -->
-            <div class="w-full md:w-1/2 px-2">
-                <label for="dailyAnswerInput" class="block text-blue-700 text-lg font-bold mb-2">คำถามประจำวันนี้?:</label>
-                <input type="text" id="dailyAnswerInput" placeholder="กรอกคำตอบ" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
-            </div>
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-6">ระบบแจกหมายเลขผู้เรียน</h1>
+        
+        <!-- Form status message -->
+        <div id="formStatusMessage" class="form-status-message">
+            การลงทะเบียนปิดอยู่ โปรดรอการเปิดรอบถัดไป
         </div>
 
-        <button id="registerButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 md:py-2 md:px-4 md:text-base" disabled>
-            ลงทะเบียนรับหมายเลขผู้เรียนประจำวัน
-        </button>
+        <!-- Student form container to toggle visibility/interaction -->
+        <div id="studentFormContainer">
+            <p class="text-xl font-bold text-gray-600 mb-2">กรอกรหัสนักศึกษา และตอบคำถามประจำวัน</p>
+            <p class="text-gray-600 mb-6 text-sm">เพื่อรับหมายเลขประจำตัวผู้เรียนประจำวันนี้ เพื่อใช้ในการทำ Workshop</p>
+
+            <!-- Input fields section: student ID and daily answer -->
+            <div class="mb-4 flex flex-wrap -mx-2 items-end">
+                <!-- Student ID input (left column) -->
+                <div class="w-full md:w-1/2 px-2 mb-4 md:mb-0"> <!-- Added mb-4 for vertical spacing -->
+                    <label for="studentIdInput" class="block text-blue-700 text-lg font-bold mb-2">รหัสนักศึกษา:</label>
+                    <input type="text" id="studentIdInput" placeholder="กรอกรหัสนักศึกษา เช่น 1660312345" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
+                </div>
+                <!-- Daily Question/Answer input (right column) -->
+                <div class="w-full md:w-1/2 px-2">
+                    <label for="dailyAnswerInput" class="block text-blue-700 text-lg font-bold mb-2">คำถามประจำวันนี้?:</label>
+                    <input type="text" id="dailyAnswerInput" placeholder="กรอกคำตอบ" class="focus:ring-2 focus:ring-green-300 focus:border-green-500 border-2 border-gray-400 placeholder-gray-400">
+                </div>
+            </div>
+
+            <button id="registerButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 md:py-2 md:px-4 md:text-base" disabled>
+                ลงทะเบียนรับหมายเลขผู้เรียนประจำวัน
+            </button>
+        </div>
+        
 
         <div id="messageDisplay" class="message-box hidden">
             <!-- ข้อความจะแสดงที่นี่ -->
@@ -543,7 +573,6 @@
                 <select id="sessionSelect" class="p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <!-- Options will be populated by JavaScript -->
                 </select>
-                <button id="viewSelectedReportButton" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">แสดงรายงาน</button>
             </div>
 
             <div id="reportLoadingIndicator" class="report-loading-indicator">
@@ -554,9 +583,11 @@
                 <div id="rightTableContainer" class="w-full md:w-1/2 px-2"></div>
                 <p id="noReportDataMessage" class="no-data-message hidden w-full px-2">ยังไม่มีข้อมูลการลงทะเบียนสำหรับวันนี้</p>
             </div>
-            <div class="mt-4">
-                <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg w-auto">ปิดรายงาน</button>
-                <button id="deleteReportButton" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg w-auto ml-4">ลบรายงานนี้</button>
+            <div class="mt-4 flex flex-wrap justify-center items-center gap-3">
+                <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-1.5 px-3 rounded-lg text-sm w-auto">ปิดรายงาน</button>
+                <!-- Removed the "แสดงรายงาน" button -->
+                <button id="exportReportButton" class="bg-amber-500 hover:bg-amber-600 text-white py-1.5 px-3 rounded-lg text-sm w-auto">Export</button>
+                <button id="deleteReportButton" class="bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg text-sm w-auto">ลบรายงานนี้</button>
             </div>
         </div>
 
@@ -573,10 +604,12 @@
         </div>
     </div>
 
-    <!-- Custom Confirmation Modal (For Reset) -->
+    <!-- Custom Confirmation Modal (For Reset and Delete Report) -->
     <div id="confirmationModal" class="modal">
         <div class="modal-content">
             <p id="confirmationModalMessage" class="text-lg font-semibold mb-4">ต้องการดำเนินการต่อ?</p>
+            <input type="text" id="confirmationTextInput" class="hidden" placeholder="พิมพ์ 'ยืนยันการลบ' เพื่อดำเนินการ">
+            <span id="confirmationTextError" class="password-error-message hidden"></span>
             <div class="modal-buttons">
                 <button id="confirmActionButton" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg">ยืนยัน</button>
                 <button id="cancelActionButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg">ยกเลิก</button>
@@ -613,9 +646,9 @@
                 <table id="preRegisteredIdsTable">
                     <thead>
                         <tr>
-                            <th class="w-1/12"><input type="checkbox" id="selectAllPreRegIds"></th>
+                            <th class="w-1/12"><input type="checkbox" id="selectAllPreRegIds"></th> <!-- Re-added checkbox header -->
                             <th class="w-6/12">รหัสนักศึกษา</th>
-                            <th class="w-5/12">จัดการ</th>
+                            <th class="w-5/12">จัดการ</th> <!-- Re-added manage header -->
                         </tr>
                     </thead>
                     <tbody>
@@ -625,8 +658,7 @@
                 <p id="noPreRegDataMessage" class="no-data-message hidden">ยังไม่มีรายชื่อนักศึกษาที่ลงทะเบียนล่วงหน้า</p>
             </div>
             <div class="modal-buttons">
-                <button id="deleteSelectedPreRegisteredIdsButton" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg" disabled>ลบรายการที่เลือก</button>
-                <!-- Removed Clear All Pre-registered IDs button -->
+                <button id="deleteSelectedPreRegisteredIdsButton" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg" disabled>ลบรายการที่เลือก</button> <!-- Re-added delete selected button -->
                 <button id="closeViewPreRegModalButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg">ปิด</button>
             </div>
         </div>
@@ -643,13 +675,6 @@
     <!-- New Admin Login Status Message -->
     <div id="adminLoginStatusMessage" class="hidden"></div>
 
-
-    <!-- Floating Export Button (Save Icon) -->
-    <div id="fixedExportButtonContainer">
-        <button id="toggleExportReportButton" class="floating-icon-button">
-            <i class="fas fa-save"></i> <!-- Icon for save -->
-        </button>
-    </div>
 
     <!-- New Floating Import Button (Import Icon) -->
     <div id="fixedImportButtonContainer">
@@ -672,6 +697,13 @@
         </button>
     </div>
 
+    <!-- New Floating Toggle Form Button -->
+    <div id="fixedToggleFormButtonContainer">
+        <button id="toggleFormVisibilityButton" class="floating-icon-button" title="สลับสถานะเปิด/ปิดฟอร์ม">
+            <i class="fas fa-lock-open"></i> <!-- Default icon: Open lock -->
+        </button>
+    </div>
+
 
     <!-- New Floating Reset Button (Smiling Face Icon) -->
     <div id="fixedResetButtonContainer">
@@ -689,7 +721,7 @@
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // MANDATORY: Use __firebase_config from the Canvas environment
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { 
+        const firebaseConfig = {
             apiKey: "AIzaSyDSHO-N-kX8CRNPv0z9WMK0AfdiAa5_PRA",
             authDomain: "queue-app2.firebaseapp.com",
             projectId: "queue-app2",
@@ -724,12 +756,18 @@
         const deleteReportButton = document.getElementById('deleteReportButton'); // NEW: Delete Report Button
         const currentQueueInfoDiv = document.getElementById('currentQueueInfo'); // Reference to the queue info div
         const sessionSelect = document.getElementById('sessionSelect'); // New dropdown for sessions
-        const viewSelectedReportButton = document.getElementById('viewSelectedReportButton'); // New button to view selected report
+        // const viewSelectedReportButton = document.getElementById('viewSelectedReportButton'); // REMOVED: No longer needed
+        const exportReportButton = document.getElementById('exportReportButton'); // NEW: Export button in report section
+
+        // NEW UI elements for form open/close
+        const studentFormContainer = document.getElementById('studentFormContainer');
+        const formStatusMessage = document.getElementById('formStatusMessage');
+        const toggleFormVisibilityButton = document.getElementById('toggleFormVisibilityButton');
+        const toggleFormVisibilityButtonIcon = toggleFormVisibilityButton.querySelector('i'); // Get the icon
 
         // Admin UI elements
         const adminPanelContainer = document.getElementById('adminPanelContainer');
         const toggleAdminPanelButton = document.getElementById('toggleAdminPanelButton'); // Get the question mark button
-        const toggleExportReportButton = document.getElementById('toggleExportReportButton');
         const toggleImportIdsButton = document.getElementById('toggleImportIdsButton'); // New: Import button
         const toggleViewPreRegButton = document.getElementById('toggleViewPreRegButton'); // New: View Pre-reg button
         const toggleDailyReportButton = document.getElementById('toggleDailyReportButton'); // New: Daily Report button
@@ -752,14 +790,16 @@
         const preRegisteredIdsTable = document.getElementById('preRegisteredIdsTable');
         const preRegisteredIdsTableBody = preRegisteredIdsTable.querySelector('tbody');
         const noPreRegDataMessagePreReg = document.getElementById('noPreRegDataMessage'); // Renamed to avoid clash
-        const selectAllPreRegIdsCheckbox = document.getElementById('selectAllPreRegIds');
-        const deleteSelectedPreRegisteredIdsButton = document.getElementById('deleteSelectedPreRegisteredIdsButton');
+        const selectAllPreRegIdsCheckbox = document.getElementById('selectAllPreRegIds'); // Re-added
+        const deleteSelectedPreRegisteredIdsButton = document.getElementById('deleteSelectedPreRegisteredIdsButton'); // Re-added
         const closeViewPreRegModalButton = document.getElementById('closeViewPreRegModalButton');
 
 
         // General Confirmation Modal elements (reused for reset, single delete, multi-delete, clear all)
         const confirmationModal = document.getElementById('confirmationModal');
         const confirmationModalMessage = document.getElementById('confirmationModalMessage');
+        const confirmationTextInput = document.getElementById('confirmationTextInput'); // NEW
+        const confirmationTextError = document.getElementById('confirmationTextError');   // NEW
         const confirmActionButton = document.getElementById('confirmActionButton');
         const cancelActionButton = document.getElementById('cancelActionButton');
 
@@ -772,14 +812,13 @@
         let isAdminLoggedIn = false; // Tracks if an admin session is active
         let currentRegistrationsData = []; // To store fetched report data for export (for the currently displayed report)
         let preRegisteredStudentsData = []; // To store fetched pre-registered student IDs for view/manage
-        let selectedPreRegIdsForDeletion = new Set(); // To store selected IDs for multi-delete
+        let selectedPreRegIdsForDeletion = new Set(); // To store selected IDs for multi-delete (Re-added)
         let currentActiveSessionId = null; // To store the ID of the current active registration session
         let sessionSummaries = []; // To store summaries of all past sessions for the dropdown
         let currentHighestQueueNumber = 0; // Initialize global variable
 
         // Ensure __initial_auth_token is defined or defaults to undefined
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
-
 
         // --- Firebase Authentication ---
         onAuthStateChanged(auth, async (user) => {
@@ -788,7 +827,7 @@
                 authReady = true;
                 console.log("Firebase authenticated. User ID:", currentUserId);
                 // Enable user-facing buttons when Firebase is ready
-                registerButton.disabled = false;
+                // registerButton.disabled = false; // Initial state will be set by form status listener
                 
                 // Ensure admin action buttons and panel/report are hidden on initial load
                 toggleAdminActionButtons(false);
@@ -797,25 +836,32 @@
                 // Ensure highestQueueNumberDisplay is hidden for non-admin view on load
                 currentQueueInfoDiv.style.display = 'none';
 
-                // Initialize current session ID on app load
+                // Initialize current session ID on app load, and apply initial form status
                 await initializeCurrentSessionId();
+                // Removed setupFormStatusListener() to achieve true client-side behavior
 
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
                 try {
                     if (initialAuthToken) {
-                        console.log("Signing in with custom token...");
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        console.log("Signed in with custom token successfully.");
+                        try {
+                            console.log("Signing in with custom token...");
+                            await signInWithCustomToken(auth, initialAuthToken);
+                            console.log("Signed in with custom token successfully.");
+                        } catch (customTokenError) {
+                            console.warn("Custom token sign-in failed, falling back to anonymous:", customTokenError);
+                            // If custom token fails, explicitly try anonymous sign-in
+                            await signInAnonymously(auth);
+                            console.log("Signed in anonymously after custom token failure.");
+                        }
                     } else {
                         console.log("No custom token available, attempting anonymous sign-in...");
                         await signInAnonymously(auth);
                         console.log("Signed in anonymously successfully.");
                     }
-                } catch (error) {
-                    console.error("Error during Firebase sign-in:", error);
+                } catch (anonymousSignInError) {
+                    console.error("Error during Firebase sign-in (anonymous fallback failed):", anonymousSignInError);
                     showError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ โปรดตรวจสอบการตั้งค่า Firebase หรือลองอีกครั้ง");
-                    // Keep all buttons disabled if authentication fails
                     registerButton.disabled = true;
                 }
             }
@@ -871,6 +917,7 @@
                 errorDisplay.classList.add('hidden'); // Hide any error messages
                 passwordErrorDisplay.classList.add('hidden'); // Hide password error
                 preRegSaveErrorDisplayModal.classList.add('hidden'); // Hide pre-reg save error
+                formStatusMessage.classList.add('hidden'); // Hide form status message
 
                 if (registrationDetails && registrationDetails.queueNumber !== null && 
                     registrationDetails.studentId !== null && 
@@ -915,6 +962,7 @@
             messageDisplay.classList.add('hidden'); // Hide any success messages
             passwordErrorDisplay.classList.add('hidden'); // Hide password error
             preRegSaveErrorDisplayModal.classList.add('hidden'); // Hide pre-reg save error
+            formStatusMessage.classList.add('hidden'); // Hide form status message
         }
 
         /**
@@ -984,12 +1032,37 @@
          * Shows the general confirmation modal.
          * @param {string} message The message to display.
          * @param {Function} confirmCallback Function to call on confirm.
+         * @param {string} [requiredTextForConfirmation=''] Optional text that must be typed for confirmation.
          */
-        function showConfirmationModal(message, confirmCallback) {
+        function showConfirmationModal(message, confirmCallback, requiredTextForConfirmation = '') {
             confirmationModalMessage.textContent = message;
+            confirmationTextError.classList.add('hidden'); // Hide previous error
+            
+            if (requiredTextForConfirmation) {
+                confirmationTextInput.classList.remove('hidden');
+                confirmationTextInput.value = '';
+                confirmationTextInput.placeholder = `พิมพ์ '${requiredTextForConfirmation}' เพื่อยืนยัน`;
+                confirmationTextInput.focus();
+            } else {
+                confirmationTextInput.classList.add('hidden');
+                confirmationTextInput.value = '';
+            }
+
             confirmActionButton.onclick = async () => {
-                await confirmCallback();
-                hideConfirmationModal();
+                if (requiredTextForConfirmation) {
+                    if (confirmationTextInput.value.trim() === requiredTextForConfirmation) {
+                        confirmationTextError.classList.add('hidden');
+                        await confirmCallback();
+                        hideConfirmationModal();
+                    } else {
+                        confirmationTextError.textContent = `ข้อความไม่ตรงกัน โปรดพิมพ์ '${requiredTextForConfirmation}'`;
+                        confirmationTextError.classList.remove('hidden');
+                        confirmationTextInput.focus(); // Keep focus on the input
+                    }
+                } else {
+                    await confirmCallback();
+                    hideConfirmationModal();
+                }
             };
             cancelActionButton.onclick = hideConfirmationModal;
             confirmationModal.style.display = 'flex';
@@ -1000,6 +1073,9 @@
          */
         function hideConfirmationModal() {
             confirmationModal.style.display = 'none';
+            confirmationTextInput.classList.add('hidden'); // Ensure hidden on close
+            confirmationTextError.classList.add('hidden'); // Ensure hidden on close
+            confirmationTextInput.value = ''; // Clear value on close
         }
 
         /**
@@ -1028,9 +1104,9 @@
             viewPreRegisteredIdsModal.style.display = 'flex';
             await fetchPreRegisteredIds(); // Fetch data before rendering
             renderPreRegisteredIdsTable(); // Render table
-            selectedPreRegIdsForDeletion.clear(); // Clear selections on open
-            updateDeleteSelectedButtonState(); // Update button state
-            selectAllPreRegIdsCheckbox.checked = false; // Uncheck select all
+            selectedPreRegIdsForDeletion.clear(); // Clear selections on open (Re-added)
+            updateDeleteSelectedButtonState(); // Update button state (Re-added)
+            selectAllPreRegIdsCheckbox.checked = false; // Uncheck select all (Re-added)
         }
 
         /**
@@ -1072,19 +1148,21 @@
         }
 
         /**
-         * Toggles the visibility of admin action buttons (Export, Import, View/Manage, Daily Report, Reset).
+         * Toggles the visibility of admin action buttons (Import, View/Manage, Daily Report, Reset).
+         * Export is now in the report section.
          * @param {boolean} show True to show, False to hide.
          */
         function toggleAdminActionButtons(show) {
-            document.getElementById('fixedExportButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedImportButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedViewPreRegButtonContainer').style.display = show ? 'flex' : 'none';
-            document.getElementById('fixedDailyReportButtonContainer').style.display = show ? 'flex' : 'none'; // New button
+            document.getElementById('fixedDailyReportButtonContainer').style.display = show ? 'flex' : 'none';
+            document.getElementById('fixedToggleFormButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedResetButtonContainer').style.display = show ? 'flex' : 'none';
         }
 
         /**
          * Initializes or retrieves the current active session ID from Firestore.
+         * Also fetches and applies the initial form open/close status.
          * If no session exists, it creates a new one.
          */
         async function initializeCurrentSessionId() {
@@ -1103,6 +1181,9 @@
                     if (!data.currentSessionId) {
                          await setDoc(queueMetadataRef, { currentSessionId: currentActiveSessionId }, { merge: true });
                     }
+                    // Apply initial form status (read once on load)
+                    const isFormOpen = data.isRegistrationFormOpen !== undefined ? data.isRegistrationFormOpen : true;
+                    updateFormUI(isFormOpen); // Call to update the UI on load
                 } else {
                     // Initialize if the document doesn't exist
                     currentHighestQueueNumber = 0; // Ensures it's 0 if doc doesn't exist
@@ -1112,8 +1193,10 @@
                         highestQueueNumber: 0,
                         lastResetDate: getCurrentDate(),
                         currentSessionId: currentActiveSessionId,
-                        sessionStartTime: serverTimestamp() // Record start time for the first session
+                        sessionStartTime: serverTimestamp(), // Record start time for the first session
+                        isRegistrationFormOpen: true // Initialize form as open by default
                     });
+                    updateFormUI(true); // Initial state is open
                 }
             } catch (error) {
                 console.error("Error initializing current session ID:", error);
@@ -1140,6 +1223,32 @@
                 }
             } catch (error) {
                 console.error("Error fetching queue metadata for admin display:", error);
+            }
+        }
+        
+        /**
+         * Updates the student registration form's UI based on its open/closed status.
+         * @param {boolean} isOpen True if the form should be open, false if closed.
+         */
+        function updateFormUI(isOpen) {
+            if (isOpen) {
+                studentFormContainer.classList.remove('form-closed-overlay');
+                studentIdInput.disabled = false;
+                dailyAnswerInput.disabled = false;
+                registerButton.disabled = false;
+                formStatusMessage.classList.add('hidden');
+                toggleFormVisibilityButtonIcon.classList.remove('fa-lock');
+                toggleFormVisibilityButtonIcon.classList.add('fa-lock-open');
+                toggleFormVisibilityButton.title = 'สลับสถานะ: ปิดฟอร์ม';
+            } else {
+                studentFormContainer.classList.add('form-closed-overlay');
+                studentIdInput.disabled = true;
+                dailyAnswerInput.disabled = true;
+                registerButton.disabled = true;
+                formStatusMessage.classList.remove('hidden');
+                toggleFormVisibilityButtonIcon.classList.remove('fa-lock-open');
+                toggleFormVisibilityButtonIcon.classList.add('fa-lock');
+                toggleFormVisibilityButton.title = 'สลับสถานะ: เปิดฟอร์ม';
             }
         }
 
@@ -1181,6 +1290,13 @@
         async function registerQueue() {
             if (!authReady || !currentActiveSessionId) {
                 showError("ระบบยังไม่พร้อม หรือเซสชันยังไม่ถูกกำหนด โปรดรอสักครู่และลองอีกครั้ง");
+                showLoading(false);
+                return;
+            }
+
+            // Check if the form is currently closed before proceeding with registration logic
+            if (studentFormContainer.classList.contains('form-closed-overlay')) {
+                showMessage("การลงทะเบียนปิดอยู่ โปรดรอการเปิดรอบถัดไป");
                 showLoading(false);
                 return;
             }
@@ -1250,7 +1366,7 @@
                     } else {
                         currentActiveSessionId = getUniqueSessionId();
                         sessionStartTime = new Date(); 
-                        transaction.set(queueMetadataRef, { currentSessionId: currentActiveSessionId, highestQueueNumber: 0, sessionStartTime: serverTimestamp() }, { merge: true });
+                        transaction.set(queueMetadataRef, { currentSessionId: currentActiveSessionId, highestQueueNumber: 0, sessionStartTime: serverTimestamp(), isRegistrationFormOpen: true }, { merge: true });
                     }
                     
                     // Update the global currentHighestQueueNumber here for consistency after transaction
@@ -1354,12 +1470,14 @@
                 let previousHighestQueueNumber = 0;
                 let oldSessionId = null;
                 let sessionStartTime = null;
+                let isFormOpenStatus = true; // Preserve current form open status
 
                 if (queueMetadataDoc.exists()) {
                     const data = queueMetadataDoc.data();
                     previousHighestQueueNumber = data.highestQueueNumber || 0;
                     oldSessionId = data.currentSessionId || currentActiveSessionId;
                     sessionStartTime = data.sessionStartTime;
+                    isFormOpenStatus = data.isRegistrationFormOpen !== undefined ? data.isRegistrationFormOpen : true;
                 } else {
                     oldSessionId = currentActiveSessionId;
                     sessionStartTime = serverTimestamp(); 
@@ -1384,7 +1502,8 @@
                     highestQueueNumber: 0,
                     lastResetDate: getCurrentDate(), 
                     currentSessionId: newSessionId,
-                    sessionStartTime: serverTimestamp() 
+                    sessionStartTime: serverTimestamp(), 
+                    isRegistrationFormOpen: isFormOpenStatus // Preserve form open status for new session
                 }, { merge: true });
 
                 currentActiveSessionId = newSessionId; 
@@ -1396,10 +1515,12 @@
                 sessionSelect.value = currentActiveSessionId; 
                 refreshAndDisplayRegistrationReport(currentActiveSessionId); 
 
-            } catch (e) {
+            }
+            catch (e) {
                 console.error("Error ending current session and starting new:", e);
                 showError("เกิดข้อผิดพลาดในการรีเซ็ตและเริ่มต้นรอบคิวใหม่ โปรดลองอีกครั้ง");
-            } finally {
+            }
+            finally {
                 showLoading(false);
                 hideConfirmationModal();
             }
@@ -1504,8 +1625,13 @@
                     }
 
                     noReportDataMessage.classList.add('hidden');
+                    leftTableContainer.style.display = 'block'; // Ensure they are visible
+                    rightTableContainer.style.display = 'block';
                 } else {
+                    // If no data, hide the table containers and show the message
                     noReportDataMessage.classList.remove('hidden');
+                    leftTableContainer.style.display = 'none';
+                    rightTableContainer.style.display = 'none';
                 }
                 reportSection.style.display = 'block'; 
             } catch (e) {
@@ -1545,8 +1671,10 @@
                 if (currentActiveSessionId) {
                     const currentOption = document.createElement('option');
                     currentOption.value = currentActiveSessionId;
-                    // Changed to Buddhist Era (พ.ศ.)
-                    currentOption.textContent = `รอบปัจจุบัน (${new Date().toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' })} พ.ศ.)`; 
+                    // Changed to Buddhist Era (พ.ศ.) for the current session option display
+                    const today = new Date();
+                    const buddhistYear = today.getFullYear() + 543;
+                    currentOption.textContent = `รอบปัจจุบัน (${today.toLocaleString('th-TH', { day: '2-digit', month: '2-digit' })}/${buddhistYear})`; 
                     sessionSelect.appendChild(currentOption);
                 }
 
@@ -1554,10 +1682,22 @@
                     const option = document.createElement('option');
                     option.value = session.sessionId;
                     
-                    const startDate = session.startTime ? session.startTime.toDate().toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'N/A';
-                    const endDate = session.endTime ? session.endTime.toDate().toLocaleString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                    const startDate = session.startTime ? session.startTime.toDate() : null;
+                    const endDate = session.endTime ? session.endTime.toDate() : null;
+
+                    let startDateFormatted = 'N/A';
+                    let endDateFormatted = 'N/A';
+
+                    if (startDate) {
+                        const startYearBE = startDate.getFullYear() + 543;
+                        startDateFormatted = startDate.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + `/${startYearBE}`;
+                    }
+                    if (endDate) {
+                        const endYearBE = endDate.getFullYear() + 543;
+                        endDateFormatted = endDate.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + `/${endYearBE}`;
+                    }
                     
-                    option.textContent = `รอบคิว: ${startDate} - ${endDate} (${session.totalRegisteredStudents || 0} คน)`;
+                    option.textContent = `รอบคิว: ${startDateFormatted} - ${endDateFormatted} (${session.totalRegisteredStudents || 0} คน)`;
                     sessionSelect.appendChild(option);
                 });
 
@@ -1730,7 +1870,7 @@
             try {
                 showLoading(true);
                 const preRegCollectionRef = collection(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`);
-                const querySnapshot = await getDocs(preRegCollectionRef);
+                const querySnapshot = await getDocs(query(preRegCollectionRef)); // Corrected: use `query()` around collection reference
                 querySnapshot.forEach(docSnap => {
                     preRegisteredStudentsData.push(docSnap.id); 
                 });
@@ -1748,9 +1888,9 @@
          */
         function renderPreRegisteredIdsTable() {
             preRegisteredIdsTableBody.innerHTML = ''; 
-            selectedPreRegIdsForDeletion.clear(); 
-            selectAllPreRegIdsCheckbox.checked = false; 
-            updateDeleteSelectedButtonState(); 
+            selectedPreRegIdsForDeletion.clear(); // Re-added
+            selectAllPreRegIdsCheckbox.checked = false; // Re-added
+            updateDeleteSelectedButtonState(); // Re-added
 
             totalPreRegisteredStudentsSpan.textContent = preRegisteredStudentsData.length;
 
@@ -1767,7 +1907,7 @@
                 const row = preRegisteredIdsTableBody.insertRow();
                 row.dataset.studentId = id; 
 
-                // Checkbox cell
+                // Checkbox cell (Re-added)
                 const checkboxCell = row.insertCell();
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
@@ -1781,29 +1921,17 @@
                 idCell.textContent = id;
                 idCell.dataset.originalId = id; 
 
-                // Actions cell
+                // Actions cell - Only delete button (Re-added)
                 const actionsCell = row.insertCell();
                 actionsCell.className = 'actions';
 
+                // Removed: Individual delete button (trash icon) as requested
                 const editButton = document.createElement('button');
                 editButton.className = 'bg-yellow-500 hover:bg-yellow-600 text-white rounded-md';
                 editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>';
                 editButton.title = 'แก้ไข';
                 editButton.addEventListener('click', () => enableInlineEdit(row, id));
-
                 actionsCell.appendChild(editButton);
-                // REMOVED: Individual delete button (trash icon)
-                // const deleteButton = document.createElement('button');
-                // deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white rounded-md';
-                // deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-                // deleteButton.title = 'ลบ';
-                // deleteButton.addEventListener('click', () => showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรหัสนักศึกษา ${id} นี้?`, async () => {
-                //     await deletePreRegisteredId(id);
-                //     await fetchPreRegisteredIds(); 
-                //     renderPreRegisteredIdsTable(); 
-                //     showMessage(`ลบนักศึกษา ${id} สำเร็จ`);
-                // }));
-                // actionsCell.appendChild(deleteButton);
             });
         }
 
@@ -1892,20 +2020,7 @@
             editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>';
             editButton.title = 'แก้ไข';
             editButton.addEventListener('click', () => enableInlineEdit(row, studentId));
-
-            // REMOVED: Individual delete button (trash icon)
-            // const deleteButton = document.createElement('button');
-            // deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white rounded-md';
-            // deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-            // deleteButton.title = 'ลบ';
-            // deleteButton.addEventListener('click', () => showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรหัสนักศึกษา ${studentId} นี้?`, async () => {
-            //     await deletePreRegisteredId(studentId);
-            //     await fetchPreRegisteredIds();
-            //     renderPreRegisteredIdsTable();
-            //     showMessage(`ลบนักศึกษา ${studentId} สำเร็จ`);
-            // }));
             actionsCell.appendChild(editButton);
-            // actionsCell.appendChild(deleteButton);
         }
 
         /**
@@ -1981,7 +2096,7 @@
                 await batch.commit();
 
                 showMessage(`ลบนักศึกษาที่เลือกจำนวน ${idsToDelete.size} รายการสำเร็จ`);
-                selectedPreRegIdsForDeletion.clear(); 
+                selectedPreRegIdsForDeletion.clear(); // Re-added
                 await fetchPreRegisteredIds(); 
                 renderPreRegisteredIdsTable();
             }
@@ -2068,8 +2183,8 @@
             } else { 
                 if (isAdminLoggedIn) { 
                     toggleAdminActionButtons(
-                        !document.getElementById('fixedExportButtonContainer').style.display || 
-                        document.getElementById('fixedExportButtonContainer').style.display === 'none'
+                        !document.getElementById('fixedImportButtonContainer').style.display || // Check any of the floating buttons
+                        document.getElementById('fixedImportButtonContainer').style.display === 'none'
                     );
                 } else { 
                     showAdminPanel();
@@ -2108,8 +2223,8 @@
             }
         });
 
-        // Handle click on the Export Button
-        toggleExportReportButton.addEventListener('click', async () => {
+        // Handle click on the Export Button (now inside report section)
+        exportReportButton.addEventListener('click', async () => {
             hideMessages(); 
             if (isAdminLoggedIn) { 
                 showLoading(true);
@@ -2168,16 +2283,16 @@
         // Handle dropdown selection change
         sessionSelect.addEventListener('change', () => {
             const selectedSessionId = sessionSelect.value;
-            if (selectedSessionId !== currentActiveSessionId || currentRegistrationsData.length === 0) {
-                 refreshAndDisplayRegistrationReport(selectedSessionId);
-            }
-        });
-
-        // Handle click on "แสดงรายงาน" button
-        viewSelectedReportButton.addEventListener('click', () => {
-            const selectedSessionId = sessionSelect.value;
+            // Always refresh when the dropdown value changes to ensure correct data is displayed
             refreshAndDisplayRegistrationReport(selectedSessionId);
         });
+
+        // REMOVED: No longer needed as dropdown change handles refresh automatically
+        // Handle click on "แสดงรายงาน" button
+        // viewSelectedReportButton.addEventListener('click', () => {
+        //     const selectedSessionId = sessionSelect.value;
+        //     refreshAndDisplayRegistrationReport(selectedSessionId);
+        // });
 
         // Handle click on the Reset Queue Button (now ends session and starts new)
         resetQueueButton.addEventListener('click', () => {
@@ -2187,10 +2302,10 @@
             }
             hideMessages(); 
             if (isAdminLoggedIn) { 
-                showConfirmationModal("คุณแน่ใจหรือไม่ที่ต้องการเริ่มต้นรอบคิวใหม่? ข้อมูลรอบเก่าจะถูกบันทึกและไม่สามารถแก้ไขได้", async () => {
+                showConfirmationModal("คุณแน่ใจหรือไม่ที่ต้องการเริ่มต้นรอบคิวใหม่?", async () => { // Modified message
                     await endCurrentSessionAndStartNew();
                     hideDailyReport(); 
-                });
+                }, "ยืนยัน"); // Require "ยืนยัน" for confirmation
             } else {
                 showAdminPanel(); 
                 showPasswordError("กรุณากรอก Passphrase ก่อน"); 
@@ -2218,9 +2333,47 @@
 
             // Find the session name for confirmation message
             const selectedOptionText = sessionSelect.options[sessionSelect.selectedIndex].textContent;
-            showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรายงานรอบ: "${selectedOptionText}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`, async () => {
-                await deleteReportSession(selectedSessionId);
-            });
+            showConfirmationModal(
+                `คุณแน่ใจหรือไม่ที่ต้องการลบรายงานรอบ: "${selectedOptionText}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+                async () => {
+                    await deleteReportSession(selectedSessionId);
+                },
+                "ยืนยันการลบ" // Require this text for confirmation
+            );
+        });
+
+        // NEW: Handle click on Toggle Form Visibility Button
+        toggleFormVisibilityButton.addEventListener('click', async () => {
+            if (!isAdminLoggedIn) {
+                showAdminPanel();
+                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                return;
+            }
+            
+            showLoading(true);
+            hideMessages();
+
+            try {
+                const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
+                const docSnap = await getDoc(queueMetadataRef);
+                let currentStatus = true;
+                if (docSnap.exists()) {
+                    currentStatus = docSnap.data().isRegistrationFormOpen !== undefined ? docSnap.data().isRegistrationFormOpen : true;
+                }
+
+                const newStatus = !currentStatus;
+                await setDoc(queueMetadataRef, { isRegistrationFormOpen: newStatus }, { merge: true });
+
+                // Manually update the UI since onSnapshot is removed for this feature
+                updateFormUI(newStatus);
+
+                showMessage(`ฟอร์มลงทะเบียน: ${newStatus ? 'เปิด' : 'ปิด'} แล้ว`);
+            } catch (e) {
+                console.error("Error toggling form visibility:", e);
+                showError("เกิดข้อผิดพลาดในการเปลี่ยนสถานะฟอร์ม โปรดลองอีกครั้ง");
+            } finally {
+                showLoading(false);
+            }
         });
 
 
@@ -2250,7 +2403,7 @@
             updateDeleteSelectedButtonState();
         });
 
-        // Delete Selected button listener (MODIFIED)
+        // Delete Selected button listener (Re-added)
         deleteSelectedPreRegisteredIdsButton.addEventListener('click', () => {
             if (!isAdminLoggedIn) { // Check admin login status
                 showAdminPanel();
@@ -2258,10 +2411,14 @@
                 return;
             }
             if (selectedPreRegIdsForDeletion.size > 0) {
-                showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบนักศึกษาที่เลือกจำนวน ${selectedPreRegIdsForDeletion.size} รายการ? การดำเนินการนี้ไม่สามารถย้อนกลับไม่ได้`, async () => { // Added confirmation message
-                    await deleteSelectedPreRegisteredIds(selectedPreRegIdsForDeletion);
-                    hideViewPreRegisteredIdsModal(); 
-                });
+                showConfirmationModal(
+                    `คุณแน่ใจหรือไม่ที่ต้องการลบนักศึกษาที่เลือกจำนวน ${selectedPreRegIdsForDeletion.size} รายการ? การดำเนินการนี้ไม่สามารถย้อนกลับได้`,
+                    async () => { // Added confirmation message
+                        await deleteSelectedPreRegisteredIds(selectedPreRegIdsForDeletion);
+                        hideViewPreRegisteredIdsModal(); 
+                    },
+                    "ยืนยันการลบ" // Require this text for confirmation
+                );
             } else {
                 showMessage("โปรดเลือกรหัสนักศึกษาที่ต้องการลบก่อน");
             }
