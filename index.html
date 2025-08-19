@@ -1922,7 +1922,7 @@
                 const actionsCell = row.insertCell();
                 actionsCell.className = 'actions';
 
-                // Removed Edit Button:
+                // Removed Edit Button code
                 /*
                 const editButton = document.createElement('button');
                 editButton.className = 'bg-yellow-500 hover:bg-yellow-600 text-white rounded-md';
@@ -1947,135 +1947,8 @@
             });
         }
 
-        // Removed enableInlineEdit and disableInlineEdit functions as they are no longer needed
-        /*
-        function enableInlineEdit(row, originalId) {
-            const idCell = row.cells[1]; 
-            const actionsCell = row.cells[2]; 
-
-            const originalTextContent = idCell.textContent; 
-
-            // Create input field
-            const inputField = document.createElement('input');
-            inputField.type = 'number'; 
-            inputField.value = originalTextContent;
-            inputField.className = 'edit-input';
-            inputField.maxLength = 10;
-            inputField.minLength = 10;
-
-            // Create Save button
-            const saveButton = document.createElement('button');
-            saveButton.className = 'bg-green-500 hover:bg-green-600 text-white rounded-md';
-            saveButton.innerHTML = '<i class="fas fa-check"></i>';
-            saveButton.title = 'บันทึก';
-            saveButton.addEventListener('click', async () => {
-                const newId = inputField.value.trim();
-                if (newId.length !== 10 || isNaN(newId)) {
-                    showPreRegSaveErrorModal("รหัสนักศึกษาใหม่ไม่ถูกต้อง (ต้องเป็นตัวเลข 10 หลัก)");
-                    return;
-                }
-                if (newId === originalId) { 
-                    disableInlineEdit(row, originalId);
-                    return;
-                }
-                // Check if newId already exists
-                const newIdDocRef = doc(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`, newId);
-                const newIdDocSnap = await getDoc(newIdDocRef);
-                if (newIdDocSnap.exists()) {
-                    showPreRegSaveErrorModal("รหัสนักศึกษาใหม่นี้มีอยู่ในระบบแล้ว");
-                    return;
-                }
-
-                showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการเปลี่ยนรหัสนักศึกษา ${originalId} เป็น ${newId}?`, async () => {
-                    await updatePreRegisteredId(originalId, newId);
-                    await fetchPreRegisteredIds(); 
-                    renderPreRegisteredIdsTable(); 
-                    showMessage(`แก้ไขรหัสนักศึกษา ${originalId} เป็น ${newId} สำเร็จ`);
-                });
-            });
-
-            // Create Cancel button
-            const cancelButton = document.createElement('button');
-            cancelButton.className = 'bg-gray-500 hover:bg-gray-600 text-white rounded-md';
-            cancelButton.innerHTML = '<i class="fas fa-times"></i>';
-            cancelButton.title = 'ยกเลิก';
-            cancelButton.addEventListener('click', () => disableInlineEdit(row, originalId));
-
-            // Clear cell and append input/buttons
-            idCell.innerHTML = '';
-            idCell.appendChild(inputField);
-            actionsCell.innerHTML = '';
-            actionsCell.appendChild(saveButton);
-            actionsCell.appendChild(cancelButton);
-
-            inputField.focus(); 
-        }
-
-        function disableInlineEdit(row, studentId) {
-            const idCell = row.cells[1];
-            const actionsCell = row.cells[2];
-
-            idCell.textContent = studentId; 
-
-            // Restore original buttons
-            actionsCell.innerHTML = '';
-            const editButton = document.createElement('button');
-            editButton.className = 'bg-yellow-500 hover:bg-yellow-600 text-white rounded-md';
-            editButton.innerHTML = '<i class="fas fa-pencil-alt"></i>';
-            editButton.title = 'แก้ไข';
-            editButton.addEventListener('click', () => enableInlineEdit(row, studentId));
-
-            const deleteButton = document.createElement('button');
-            deleteButton.className = 'bg-red-500 hover:bg-red-600 text-white rounded-md';
-            deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-            deleteButton.title = 'ลบ';
-            deleteButton.addEventListener('click', () => showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรหัสนักศึกษา ${studentId} นี้?`, async () => {
-                await deletePreRegisteredId(studentId);
-                await fetchPreRegisteredIds();
-                renderPreRegisteredIdsTable();
-                showMessage(`ลบนักศึกษา ${studentId} สำเร็จ`);
-            }));
-
-            actionsCell.appendChild(editButton);
-            actionsCell.appendChild(deleteButton);
-        }
-        */
-
-        /**
-         * Updates a pre-registered student ID in Firestore (deletes old, creates new).
-         * @param {string} oldId The current student ID.
-         * @param {string} newId The new student ID.
-         */
-        async function updatePreRegisteredId(oldId, newId) {
-            try {
-                showLoading(true);
-                const preRegCollectionRef = collection(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`);
-                const batch = writeBatch(db);
-
-                // Delete old document
-                const oldDocRef = doc(preRegCollectionRef, oldId);
-                batch.delete(oldDocRef);
-
-                // Create new document
-                const newDocRef = doc(preRegCollectionRef, newId);
-                batch.set(newDocRef, { exists: true, addedBy: currentUserId, timestamp: serverTimestamp(), updatedFrom: oldId }); 
-
-                await batch.commit();
-            } catch (e) {
-                console.error("Error updating pre-registered ID:", e);
-                let errorMessage = "เกิดข้อผิดพลาดในการแก้ไขรายชื่อนักศึกษา โปรดลองอีกครั้ง";
-                if (e.code && e.message) {
-                    errorMessage = `เกิดข้อผิดพลาดจาก Firebase: ${e.code} - ${e.message}`;
-                } else if (e.message) {
-                    errorMessage = `เกิดข้อผิดพลาด: ${e.message}`;
-                }
-                showPreRegSaveErrorModal(errorMessage);
-                throw e; 
-            } finally {
-                showLoading(false);
-            }
-        }
-
+        // Removed enableInlineEdit and disableInlineEdit functions completely.
+        // The updatePreRegisteredId function is also removed as it was only used by enableInlineEdit.
 
         /**
          * Deletes a single pre-registered student ID from Firestore.
