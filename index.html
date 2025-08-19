@@ -585,7 +585,7 @@
             </div>
             <div class="mt-4 flex flex-wrap justify-center items-center gap-3">
                 <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-1.5 px-3 rounded-lg text-sm w-auto">ปิดรายงาน</button>
-                <button id="viewSelectedReportButton" class="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-3 rounded-lg text-sm w-auto">แสดงรายงาน</button>
+                <!-- Removed the "แสดงรายงาน" button -->
                 <button id="exportReportButton" class="bg-amber-500 hover:bg-amber-600 text-white py-1.5 px-3 rounded-lg text-sm w-auto">Export</button>
                 <button id="deleteReportButton" class="bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg text-sm w-auto">ลบรายงานนี้</button>
             </div>
@@ -756,7 +756,7 @@
         const deleteReportButton = document.getElementById('deleteReportButton'); // NEW: Delete Report Button
         const currentQueueInfoDiv = document.getElementById('currentQueueInfo'); // Reference to the queue info div
         const sessionSelect = document.getElementById('sessionSelect'); // New dropdown for sessions
-        const viewSelectedReportButton = document.getElementById('viewSelectedReportButton'); // New button to view selected report
+        // const viewSelectedReportButton = document.getElementById('viewSelectedReportButton'); // REMOVED: No longer needed
         const exportReportButton = document.getElementById('exportReportButton'); // NEW: Export button in report section
 
         // NEW UI elements for form open/close
@@ -2144,17 +2144,16 @@
         // Handle dropdown selection change
         sessionSelect.addEventListener('change', () => {
             const selectedSessionId = sessionSelect.value;
-            // Only refresh if changing to a different session or if data is empty (e.g. initial load)
-            if (selectedSessionId !== currentActiveSessionId || currentRegistrationsData.length === 0) {
-                 refreshAndDisplayRegistrationReport(selectedSessionId);
-            }
-        });
-
-        // Handle click on "แสดงรายงาน" button
-        viewSelectedReportButton.addEventListener('click', () => {
-            const selectedSessionId = sessionSelect.value;
+            // Always refresh when the dropdown value changes to ensure correct data is displayed
             refreshAndDisplayRegistrationReport(selectedSessionId);
         });
+
+        // REMOVED: No longer needed as dropdown change handles refresh automatically
+        // Handle click on "แสดงรายงาน" button
+        // viewSelectedReportButton.addEventListener('click', () => {
+        //     const selectedSessionId = sessionSelect.value;
+        //     refreshAndDisplayRegistrationReport(selectedSessionId);
+        // });
 
         // Handle click on the Reset Queue Button (now ends session and starts new)
         resetQueueButton.addEventListener('click', () => {
