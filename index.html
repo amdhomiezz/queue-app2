@@ -556,6 +556,7 @@
             </div>
             <div class="mt-4">
                 <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg w-auto">ปิดรายงาน</button>
+                <button id="deleteReportButton" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg w-auto ml-4">ลบรายงานนี้</button>
             </div>
         </div>
 
@@ -720,6 +721,7 @@
         const noReportDataMessage = document.getElementById('noReportDataMessage');
         const reportLoadingIndicator = document.getElementById('reportLoadingIndicator');
         const closeDailyReportButton = document.getElementById('closeDailyReportButton'); // New close button
+        const deleteReportButton = document.getElementById('deleteReportButton'); // NEW: Delete Report Button
         const currentQueueInfoDiv = document.getElementById('currentQueueInfo'); // Reference to the queue info div
         const sessionSelect = document.getElementById('sessionSelect'); // New dropdown for sessions
         const viewSelectedReportButton = document.getElementById('viewSelectedReportButton'); // New button to view selected report
@@ -2000,6 +2002,56 @@
             deleteSelectedPreRegisteredIdsButton.disabled = selectedPreRegIdsForDeletion.size === 0;
         }
 
+        /**
+         * Deletes a specific report session (all its registrations and the session summary).
+         * @param {string} sessionIdToDelete The ID of the session to delete.
+         */
+        async function deleteReportSession(sessionIdToDelete) {
+            showLoading(true);
+            hideMessages();
+
+            try {
+                const batch = writeBatch(db);
+
+                // 1. Delete all individual registration records for this session
+                const qRegistrations = query(
+                    collection(db, `artifacts/${appId}/public/data/queueRegistrations`),
+                    where("sessionId", "==", sessionIdToDelete)
+                );
+                const registrationsSnapshot = await getDocs(qRegistrations);
+                registrationsSnapshot.forEach(docSnap => {
+                    batch.delete(docSnap.ref);
+                });
+
+                // 2. Delete the session summary document itself
+                const sessionSummaryDocRef = doc(db, `artifacts/${appId}/public/data/queueSessions`, sessionIdToDelete);
+                batch.delete(sessionSummaryDocRef);
+
+                await batch.commit();
+
+                showMessage(`ลบรายงานรอบ ${sessionSelect.options[sessionSelect.selectedIndex].textContent} สำเร็จแล้ว`);
+                hideDailyReport(); // Hide the report section after deletion
+                await populateSessionDropdown(); // Re-populate dropdown to remove the deleted session
+                
+                // After deleting, ensure the session dropdown defaults to current or another valid option
+                if (sessionSelect.options.length > 0) {
+                    sessionSelect.value = currentActiveSessionId || sessionSelect.options[0].value;
+                    refreshAndDisplayRegistrationReport(sessionSelect.value);
+                } else {
+                    // No sessions left, ensure report is completely hidden
+                    hideDailyReport();
+                }
+
+            } catch (e) {
+                console.error("Error deleting report session:", e);
+                showError("เกิดข้อผิดพลาดในการลบรายงาน โปรดลองอีกครั้ง");
+            } finally {
+                showLoading(false);
+                hideConfirmationModal();
+            }
+        }
+
+
         // --- Event Listeners ---
         registerButton.addEventListener('click', registerQueue);
 
@@ -2144,6 +2196,33 @@
             }
         });
 
+        // Handle click on the Delete Report Button (NEW)
+        deleteReportButton.addEventListener('click', () => {
+            if (!isAdminLoggedIn) {
+                showAdminPanel();
+                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                return;
+            }
+            const selectedSessionId = sessionSelect.value;
+            if (!selectedSessionId) {
+                showError("โปรดเลือกรอบรายงานที่ต้องการลบ");
+                return;
+            }
+
+            // Prevent deleting the current active session via this button
+            if (selectedSessionId === currentActiveSessionId) {
+                showError("ไม่สามารถลบรอบคิวปัจจุบันได้ โปรดใช้ปุ่ม 'รีเซ็ตคิว' หากต้องการเริ่มรอบใหม่");
+                return;
+            }
+
+            // Find the session name for confirmation message
+            const selectedOptionText = sessionSelect.options[sessionSelect.selectedIndex].textContent;
+            showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบรายงานรอบ: "${selectedOptionText}"? การดำเนินการนี้ไม่สามารถย้อนกลับได้`, async () => {
+                await deleteReportSession(selectedSessionId);
+            });
+        });
+
+
         // Add an event listener to the password input itself to hide the error when user types
         adminPasswordInput.addEventListener('input', () => {
             passwordErrorDisplay.classList.add('hidden'); 
@@ -2170,10 +2249,15 @@
             updateDeleteSelectedButtonState();
         });
 
-        // Delete Selected button listener
+        // Delete Selected button listener (MODIFIED)
         deleteSelectedPreRegisteredIdsButton.addEventListener('click', () => {
+            if (!isAdminLoggedIn) { // Check admin login status
+                showAdminPanel();
+                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                return;
+            }
             if (selectedPreRegIdsForDeletion.size > 0) {
-                showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบนักศึกษาที่เลือกจำนวน ${selectedPreRegIdsForDeletion.size} รายการ?`, async () => {
+                showConfirmationModal(`คุณแน่ใจหรือไม่ที่ต้องการลบนักศึกษาที่เลือกจำนวน ${selectedPreRegIdsForDeletion.size} รายการ? การดำเนินการนี้ไม่สามารถย้อนกลับได้`, async () => { // Added confirmation message
                     await deleteSelectedPreRegisteredIds(selectedPreRegIdsForDeletion);
                     hideViewPreRegisteredIdsModal(); 
                 });
