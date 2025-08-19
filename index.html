@@ -224,7 +224,7 @@
         #adminPanelContainer {
             position: fixed;
             bottom: 20px;
-            left: 80px; /* Adjusted position to be slightly to the right of export button */
+            left: 80px; /* Adjusted position to be slightly to the right of toggle button */
             z-index: 998; /* Below the toggle button, but above content */
             background-color: #fffbeb;
             padding: 15px;
@@ -339,26 +339,11 @@
             visibility: visible;
         }
 
-
-        #fixedExportButtonContainer {
+        /* New Floating Import Button (Import Icon) */
+        #fixedImportButtonContainer { 
             position: fixed;
             bottom: 20px;
             left: 80px; /* Positioned next to admin toggle button */
-            z-index: 999;
-            display: none; /* Hidden by default, shown by JS */
-        }
-        #toggleExportReportButton { /* Specific style for Save button */
-            background-color: #9ca3af; /* A subtle blue-gray */
-            color: #fff;
-        }
-        #toggleExportReportButton:hover {
-            background-color: #6b7280; /* Darker gray on hover */
-        }
-
-        #fixedImportButtonContainer { /* New Import button container */
-            position: fixed;
-            bottom: 20px;
-            left: 140px; /* Positioned to the right of Export button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -373,7 +358,7 @@
         #fixedViewPreRegButtonContainer { /* New View Pre-reg button container */
             position: fixed;
             bottom: 20px;
-            left: 200px; /* Positioned to the right of Import button */
+            left: 140px; /* Positioned to the right of Import button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -389,7 +374,7 @@
         #fixedDailyReportButtonContainer {
             position: fixed;
             bottom: 20px;
-            left: 260px; /* Positioned to the right of View Pre-reg button */
+            left: 200px; /* Positioned to the right of View Pre-reg button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -405,7 +390,7 @@
         #fixedToggleFormButtonContainer {
             position: fixed;
             bottom: 20px;
-            left: 320px; /* Positioned to the right of Daily Report button */
+            left: 260px; /* Positioned to the right of Daily Report button */
             z-index: 999;
             display: none; /* Hidden by default, shown by JS */
         }
@@ -588,8 +573,6 @@
                 <select id="sessionSelect" class="p-2 border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                     <!-- Options will be populated by JavaScript -->
                 </select>
-                <button id="viewSelectedReportButton" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">แสดงรายงาน</button>
-                <button id="exportReportButton" class="bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded-lg">Export</button>
             </div>
 
             <div id="reportLoadingIndicator" class="report-loading-indicator">
@@ -600,9 +583,11 @@
                 <div id="rightTableContainer" class="w-full md:w-1/2 px-2"></div>
                 <p id="noReportDataMessage" class="no-data-message hidden w-full px-2">ยังไม่มีข้อมูลการลงทะเบียนสำหรับวันนี้</p>
             </div>
-            <div class="mt-4 flex justify-between items-center">
-                <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-2 px-4 rounded-lg w-auto">ปิดรายงาน</button>
-                <button id="deleteReportButton" class="bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg text-sm">ลบรายงานนี้</button>
+            <div class="mt-4 flex flex-wrap justify-center items-center gap-3">
+                <button id="closeDailyReportButton" class="bg-gray-400 hover:bg-gray-500 text-white py-1.5 px-3 rounded-lg text-sm w-auto">ปิดรายงาน</button>
+                <button id="viewSelectedReportButton" class="bg-blue-500 hover:bg-blue-600 text-white py-1.5 px-3 rounded-lg text-sm w-auto">แสดงรายงาน</button>
+                <button id="exportReportButton" class="bg-amber-500 hover:bg-amber-600 text-white py-1.5 px-3 rounded-lg text-sm w-auto">Export</button>
+                <button id="deleteReportButton" class="bg-red-600 hover:bg-red-700 text-white py-1.5 px-3 rounded-lg text-sm w-auto">ลบรายงานนี้</button>
             </div>
         </div>
 
@@ -691,14 +676,6 @@
     <div id="adminLoginStatusMessage" class="hidden"></div>
 
 
-    <!-- Floating Export Button (Save Icon) - This is now unused and can be removed, or its display set to none permanently -->
-    <!-- It's left here but its functionality is moved. Keeping for direct ID reference in JS if needed, though not ideal. -->
-    <div id="fixedExportButtonContainer" style="display: none;">
-        <button id="toggleExportReportButton" class="floating-icon-button">
-            <i class="fas fa-save"></i> <!-- Icon for save -->
-        </button>
-    </div>
-
     <!-- New Floating Import Button (Import Icon) -->
     <div id="fixedImportButtonContainer">
         <button id="toggleImportIdsButton" class="floating-icon-button">
@@ -744,14 +721,14 @@
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // MANDATORY: Use __firebase_config from the Canvas environment
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { 
-            apiKey: "AIzaSyA7OgbR00tGMjrQXAOtLUX34y8sXulK-5s",
-            authDomain: "queue-app-72e53.firebaseapp.com",
-            projectId: "queue-app-72e53",
-            storageBucket: "queue-app-72e53.firebasestorage.app",
-            messagingSenderId: "457625398149",
-            appId: "1:457625398149:web:2752c4993e1ced324172ec",
-            measurementId: "G-BHFP0TNYY3"
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSHO-N-kX8CRNPv0z9WMK0AfdiAa5_PRA",
+            authDomain: "queue-app2.firebaseapp.com",
+            projectId: "queue-app2",
+            storageBucket: "queue-app2.firebasestorage.app",
+            messagingSenderId: "431996014467",
+            appId: "1:431996014467:web:8c9ab7cfdde6d3b27f70b6",
+            measurementId: "G-N26VFDKR6L"
         };
         // MANDATORY: Use __app_id for the app ID
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId; // Fallback to projectId if __app_id is not defined
@@ -791,7 +768,6 @@
         // Admin UI elements
         const adminPanelContainer = document.getElementById('adminPanelContainer');
         const toggleAdminPanelButton = document.getElementById('toggleAdminPanelButton'); // Get the question mark button
-        // const toggleExportReportButton = document.getElementById('toggleExportReportButton'); // This is now the in-report export button
         const toggleImportIdsButton = document.getElementById('toggleImportIdsButton'); // New: Import button
         const toggleViewPreRegButton = document.getElementById('toggleViewPreRegButton'); // New: View Pre-reg button
         const toggleDailyReportButton = document.getElementById('toggleDailyReportButton'); // New: Daily Report button
@@ -868,18 +844,24 @@
                 console.log("Firebase not authenticated. Attempting sign-in...");
                 try {
                     if (initialAuthToken) {
-                        console.log("Signing in with custom token...");
-                        await signInWithCustomToken(auth, initialAuthToken);
-                        console.log("Signed in with custom token successfully.");
+                        try {
+                            console.log("Signing in with custom token...");
+                            await signInWithCustomToken(auth, initialAuthToken);
+                            console.log("Signed in with custom token successfully.");
+                        } catch (customTokenError) {
+                            console.warn("Custom token sign-in failed, falling back to anonymous:", customTokenError);
+                            // If custom token fails, explicitly try anonymous sign-in
+                            await signInAnonymously(auth);
+                            console.log("Signed in anonymously after custom token failure.");
+                        }
                     } else {
                         console.log("No custom token available, attempting anonymous sign-in...");
                         await signInAnonymously(auth);
                         console.log("Signed in anonymously successfully.");
                     }
-                } catch (error) {
-                    console.error("Error during Firebase sign-in:", error);
+                } catch (anonymousSignInError) {
+                    console.error("Error during Firebase sign-in (anonymous fallback failed):", anonymousSignInError);
                     showError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ โปรดตรวจสอบการตั้งค่า Firebase หรือลองอีกครั้ง");
-                    // Keep all buttons disabled if authentication fails
                     registerButton.disabled = true;
                 }
             }
@@ -1166,16 +1148,15 @@
         }
 
         /**
-         * Toggles the visibility of admin action buttons (Export, Import, View/Manage, Daily Report, Reset).
+         * Toggles the visibility of admin action buttons (Import, View/Manage, Daily Report, Reset).
+         * Export is now in the report section.
          * @param {boolean} show True to show, False to hide.
          */
         function toggleAdminActionButtons(show) {
-            // The export button is now within the reportSection, so no longer toggled by these global floating buttons.
-            // document.getElementById('fixedExportButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedImportButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedViewPreRegButtonContainer').style.display = show ? 'flex' : 'none';
-            document.getElementById('fixedDailyReportButtonContainer').style.display = show ? 'flex' : 'none'; // New button
-            document.getElementById('fixedToggleFormButtonContainer').style.display = show ? 'flex' : 'none'; // NEW Toggle Form Button
+            document.getElementById('fixedDailyReportButtonContainer').style.display = show ? 'flex' : 'none';
+            document.getElementById('fixedToggleFormButtonContainer').style.display = show ? 'flex' : 'none';
             document.getElementById('fixedResetButtonContainer').style.display = show ? 'flex' : 'none';
         }
 
@@ -2181,7 +2162,7 @@
                 showConfirmationModal("คุณแน่ใจหรือไม่ที่ต้องการเริ่มต้นรอบคิวใหม่?", async () => { // Modified message
                     await endCurrentSessionAndStartNew();
                     hideDailyReport(); 
-                });
+                }, "ยืนยัน"); // Require "ยืนยัน" for confirmation
             } else {
                 showAdminPanel(); 
                 showPasswordError("กรุณากรอก Passphrase ก่อน"); 
