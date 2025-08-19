@@ -735,7 +735,7 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
         // MANDATORY: Use __firebase_config from the Canvas environment
@@ -852,10 +852,10 @@
                 // Ensure highestQueueNumberDisplay is hidden for non-admin view on load
                 currentQueueInfoDiv.style.display = 'none';
 
-                // Initialize current session ID on app load
+                // Initialize current session ID on app load, and apply initial form status
                 await initializeCurrentSessionId();
-                // Set up real-time listener for form status
-                setupFormStatusListener();
+                // Removed setupFormStatusListener() to achieve true client-side behavior
+                // setupFormStatusListener(); 
 
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
@@ -1145,6 +1145,7 @@
 
         /**
          * Initializes or retrieves the current active session ID from Firestore.
+         * Also fetches and applies the initial form open/close status.
          * If no session exists, it creates a new one.
          */
         async function initializeCurrentSessionId() {
@@ -1163,6 +1164,9 @@
                     if (!data.currentSessionId) {
                          await setDoc(queueMetadataRef, { currentSessionId: currentActiveSessionId }, { merge: true });
                     }
+                    // Apply initial form status (read once on load)
+                    const isFormOpen = data.isRegistrationFormOpen !== undefined ? data.isRegistrationFormOpen : true;
+                    updateFormUI(isFormOpen); // Call to update the UI on load
                 } else {
                     // Initialize if the document doesn't exist
                     currentHighestQueueNumber = 0; // Ensures it's 0 if doc doesn't exist
@@ -1175,6 +1179,7 @@
                         sessionStartTime: serverTimestamp(), // Record start time for the first session
                         isRegistrationFormOpen: true // Initialize form as open by default
                     });
+                    updateFormUI(true); // Initial state is open
                 }
             } catch (error) {
                 console.error("Error initializing current session ID:", error);
@@ -1204,10 +1209,9 @@
             }
         }
 
-        /**
-         * Sets up a real-time listener for the form's open/close status in Firestore.
-         * This will update the UI on all connected clients immediately.
-         */
+        // Removed the setupFormStatusListener as per client-side control request.
+        // The form status will now only update on initial page load or manual refresh.
+        /*
         function setupFormStatusListener() {
             const queueMetadataRef = doc(db, `artifacts/${appId}/public/data/queueMetadata`, 'currentQueue');
             onSnapshot(queueMetadataRef, (docSnap) => {
@@ -1222,6 +1226,7 @@
                 // Optionally show a message to the user that real-time updates might be failing
             });
         }
+        */
 
         /**
          * Updates the student registration form's UI based on its open/closed status.
@@ -2352,6 +2357,9 @@
 
                 const newStatus = !currentStatus;
                 await setDoc(queueMetadataRef, { isRegistrationFormOpen: newStatus }, { merge: true });
+
+                // Manually update the UI since onSnapshot is removed for this feature
+                updateFormUI(newStatus);
 
                 showMessage(`ฟอร์มลงทะเบียน: ${newStatus ? 'เปิด' : 'ปิด'} แล้ว`);
             } catch (e) {
