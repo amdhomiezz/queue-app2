@@ -616,10 +616,14 @@
         </div>
     </div>
 
-    <!-- Floating Admin Panel (only for Passphrase input) -->
+    <!-- Floating Admin Panel (now with email and password for Firebase Auth) -->
     <div id="adminPanelContainer">
-        <input type="password" id="adminPasswordInput" placeholder="กรอกเพื่อลาออก" class="admin-password-input focus:ring-2 focus:ring-yellow-300 focus:border-transparent">
-        <span id="passwordErrorDisplay" class="password-error-message hidden">Passphrase ไม่ถูกต้อง</span>
+        <label for="adminEmailInput" class="block text-gray-700 text-sm font-semibold mb-1 text-left">Admin Email:</label>
+        <input type="email" id="adminEmailInput" placeholder="admin@example.com" class="admin-password-input mb-2 focus:ring-2 focus:ring-yellow-300 focus:border-transparent">
+        
+        <label for="adminPasswordInput" class="block text-gray-700 text-sm font-semibold mb-1 text-left">Password:</label>
+        <input type="password" id="adminPasswordInput" placeholder="กรอกรหัสผ่าน" class="admin-password-input focus:ring-2 focus:ring-yellow-300 focus:border-transparent">
+        <span id="passwordErrorDisplay" class="password-error-message hidden"></span>
     </div>
 
     <!-- New Modal for Importing Student IDs -->
@@ -717,7 +721,7 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, collection, query, where, addDoc, serverTimestamp, getDocs, deleteDoc, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
@@ -771,6 +775,7 @@
         const toggleImportIdsButton = document.getElementById('toggleImportIdsButton'); // New: Import button
         const toggleViewPreRegButton = document.getElementById('toggleViewPreRegButton'); // New: View Pre-reg button
         const toggleDailyReportButton = document.getElementById('toggleDailyReportButton'); // New: Daily Report button
+        const adminEmailInput = document.getElementById('adminEmailInput'); // NEW: Admin Email Input
         const adminPasswordInput = document.getElementById('adminPasswordInput');
         const passwordErrorDisplay = document.getElementById('passwordErrorDisplay');
         const resetQueueButton = document.getElementById('resetQueueButton');
@@ -804,8 +809,8 @@
         const cancelActionButton = document.getElementById('cancelActionButton');
 
 
-        // Admin password (IMPORTANT: For a real app, this should NOT be hardcoded client-side!)
-        const ADMIN_PASSWORD = "thisisME@1987"; // Admin password from user input
+        // Admin UID (This is specific to your admin user created in Firebase Authentication)
+        const ADMIN_UID = 'sd8AM8bM9tXOD3FAyKwV0Gqnq2T2'; // REPLACE WITH YOUR ACTUAL ADMIN UID
 
         let currentUserId = null;
         let authReady = false;
@@ -826,11 +831,18 @@
                 currentUserId = user.uid;
                 authReady = true;
                 console.log("Firebase authenticated. User ID:", currentUserId);
-                // Enable user-facing buttons when Firebase is ready
-                // registerButton.disabled = false; // Initial state will be set by form status listener
+
+                // Check if the current authenticated user is the admin
+                if (user.uid === ADMIN_UID) {
+                    isAdminLoggedIn = true;
+                    console.log("Admin user recognized.");
+                } else {
+                    isAdminLoggedIn = false;
+                }
                 
                 // Ensure admin action buttons and panel/report are hidden on initial load
-                toggleAdminActionButtons(false);
+                // Only show admin buttons if already logged in as admin
+                toggleAdminActionButtons(isAdminLoggedIn);
                 hideAdminPanel();
                 hideDailyReport();
                 // Ensure highestQueueNumberDisplay is hidden for non-admin view on load
@@ -838,7 +850,6 @@
 
                 // Initialize current session ID on app load, and apply initial form status
                 await initializeCurrentSessionId();
-                // Removed setupFormStatusListener() to achieve true client-side behavior
 
             } else {
                 console.log("Firebase not authenticated. Attempting sign-in...");
@@ -1122,9 +1133,11 @@
          */
         function showAdminPanel() {
             adminPanelContainer.style.display = 'flex';
-            adminPasswordInput.focus();
+            // Pre-fill admin email for convenience if it's a fixed admin user
+            adminEmailInput.value = 'admin@example.com'; 
+            adminPasswordInput.value = ''; // Clear password on show
+            adminPasswordInput.focus(); // Focus on password for typing
             passwordErrorDisplay.classList.add('hidden'); // Clear previous error
-            adminPasswordInput.value = ''; // Clear input on show
         }
 
         /**
@@ -1132,6 +1145,7 @@
          */
         function hideAdminPanel() {
             adminPanelContainer.style.display = 'none';
+            adminEmailInput.value = '';
             adminPasswordInput.value = '';
             passwordErrorDisplay.classList.add('hidden');
         }
@@ -1459,6 +1473,10 @@
                 showError("ระบบยังไม่พร้อม โปรดรอสักครู่และลองอีกครั้ง");
                 return;
             }
+            if (!isAdminLoggedIn) {
+                showError("คุณไม่มีสิทธิ์ดำเนินการนี้");
+                return;
+            }
 
             showLoading(true);
             hideMessages();
@@ -1538,10 +1556,9 @@
                 showError("ระบบยังไม่พร้อม โปรดรอสักครู่และลองอีกครั้ง");
                 return;
             }
-            if (!sessionIdToDisplay) {
-                console.warn("No session ID to display report for.");
-                showError("ไม่พบรอบรายงานที่เลือก โปรดเลือกรอบ");
-                showReportLoading(false); 
+            // Report viewing is an admin-only action
+            if (!isAdminLoggedIn) {
+                showError("คุณไม่มีสิทธิ์เข้าถึงรายงานนี้ โปรดเข้าสู่ระบบในฐานะผู้ดูแลระบบ");
                 return;
             }
 
@@ -1726,6 +1743,10 @@
                 showError("ไม่มีข้อมูลรายงานให้ส่งออก");
                 return false; 
             }
+            if (!isAdminLoggedIn) {
+                showError("คุณไม่มีสิทธิ์ดำเนินการนี้");
+                return false;
+            }
 
             // Updated headers for CSV
             const headers = ["ลำดับ", "รหัสนักศึกษา", "คำตอบประจำวัน", "เวลาลงทะเบียน", "ละติจูด", "ลองจิจูด", "Session ID"]; 
@@ -1794,6 +1815,11 @@
 
             hideMessages(); 
             preRegSaveErrorDisplayModal.classList.add('hidden'); 
+
+            if (!isAdminLoggedIn) {
+                showPreRegSaveErrorModal("คุณไม่มีสิทธิ์ดำเนินการนี้");
+                return;
+            }
 
             const idsToSaveText = preRegisteredIdsTextareaModal.value.trim();
             if (!idsToSaveText) {
@@ -1868,12 +1894,14 @@
                 showError("ระบบยังไม่พร้อม โปรดรอสักครู่และลองอีกครั้ง");
                 return;
             }
+            // All users need to read pre-registered IDs to check if they are allowed to register.
+            // Admin needs to read for management purposes. No isAdminLoggedIn check needed here.
 
             preRegisteredStudentsData = []; 
             try {
                 showLoading(true);
                 const preRegCollectionRef = collection(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`);
-                const querySnapshot = await getDocs(query(preRegCollectionRef)); // Corrected: use `query()` around collection reference
+                const querySnapshot = await getDocs(query(preRegCollectionRef)); 
                 querySnapshot.forEach(docSnap => {
                     preRegisteredStudentsData.push(docSnap.id); 
                 });
@@ -1947,6 +1975,9 @@
          * @param {string} newId The new student ID.
          */
         async function updatePreRegisteredId(oldId, newId) {
+            if (!isAdminLoggedIn) {
+                throw new Error("คุณไม่มีสิทธิ์ดำเนินการนี้");
+            }
             try {
                 showLoading(true);
                 const preRegCollectionRef = collection(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`);
@@ -1982,6 +2013,10 @@
          * @param {string} studentId The ID to delete.
          */
         async function deletePreRegisteredId(studentId) {
+            if (!isAdminLoggedIn) {
+                showError("คุณไม่มีสิทธิ์ดำเนินการนี้");
+                return;
+            }
             try {
                 showLoading(true);
                 const docRef = doc(db, `artifacts/${appId}/public/data/preRegisteredStudentIds`, studentId);
@@ -2001,6 +2036,10 @@
         async function deleteSelectedPreRegisteredIds(idsToDelete) {
             if (idsToDelete.size === 0) {
                 showMessage("โปรดเลือกรหัสนักศึกษาที่ต้องการลบ");
+                return;
+            }
+            if (!isAdminLoggedIn) {
+                showError("คุณไม่มีสิทธิ์ดำเนินการนี้");
                 return;
             }
 
@@ -2033,7 +2072,7 @@
             const checkboxes = preRegisteredIdsTableBody.querySelectorAll('.pre-reg-checkbox:checked');
             selectedPreRegIdsForDeletion.clear();
             checkboxes.forEach(cb => selectedPreRegIdsForDeletion.add(cb.dataset.studentId));
-            deleteSelectedPreRegisteredIdsButton.disabled = selectedPreRegIdsForDeletion.size === 0;
+            deleteSelectedPreRegisteredIdsButton.disabled = selectedPreRegIdsForDeletion.size === 0 || !isAdminLoggedIn;
         }
 
         /**
@@ -2041,6 +2080,11 @@
          * @param {string} sessionIdToDelete The ID of the session to delete.
          */
         async function deleteReportSession(sessionIdToDelete) {
+            if (!isAdminLoggedIn) {
+                showError("คุณไม่มีสิทธิ์ดำเนินการนี้");
+                return;
+            }
+
             showLoading(true);
             hideMessages();
 
@@ -2094,48 +2138,78 @@
             hideMessages(); 
             if (adminPanelContainer.style.display === 'flex') { 
                 hideAdminPanel(); 
-                if (isAdminLoggedIn) {
+                if (isAdminLoggedIn) { // If already logged in, hide admin buttons too when panel is hidden
                     toggleAdminActionButtons(false);
                     hideDailyReport(); 
                 }
             } else { 
-                if (isAdminLoggedIn) { 
+                if (isAdminLoggedIn) { // If already logged in, just toggle visibility of admin buttons
                     toggleAdminActionButtons(
                         !document.getElementById('fixedImportButtonContainer').style.display || // Check any of the floating buttons
                         document.getElementById('fixedImportButtonContainer').style.display === 'none'
                     );
-                } else { 
+                } else { // If not logged in as admin, show the login panel
                     showAdminPanel();
                 }
             }
         });
 
-        // Event listener for Enter key in password input (in adminPanelContainer)
-        adminPasswordInput.addEventListener('keyup', (event) => {
+        // Event listener for Enter key in admin password input (in adminPanelContainer)
+        adminPasswordInput.addEventListener('keyup', async (event) => {
             if (event.key === 'Enter') {
-                if (adminPasswordInput.value.trim() === '') {
-                    showPasswordError("กรุณากรอก Passphrase");
+                const adminEmail = adminEmailInput.value.trim();
+                const adminPassword = adminPasswordInput.value.trim();
+
+                if (!adminEmail || !adminPassword) {
+                    showPasswordError("กรุณากรอกอีเมลและรหัสผ่าน");
                     return;
                 }
 
                 hideMessages();
-                const enteredPassword = adminPasswordInput.value;
-                if (enteredPassword === ADMIN_PASSWORD && authReady) {
-                    isAdminLoggedIn = true;
-                    hideAdminPanel(); 
-                    toggleAdminActionButtons(true); 
-                    
-                    adminLoginStatusMessage.textContent = "เข้าสู่ระบบผู้ดูแลระบบสำเร็จ";
-                    adminLoginStatusMessage.classList.add('visible');
-                    setTimeout(() => {
-                        adminLoginStatusMessage.classList.remove('visible');
-                        adminLoginStatusMessage.textContent = '';
-                    }, 3000); 
-                } else {
-                    showPasswordError("Passphrase ไม่ถูกต้อง");
+                showLoading(true);
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, adminEmail, adminPassword);
+                    const user = userCredential.user;
+
+                    if (user && user.uid === ADMIN_UID) {
+                        isAdminLoggedIn = true;
+                        currentUserId = user.uid; // Update currentUserId to admin's UID
+                        hideAdminPanel();
+                        toggleAdminActionButtons(true);
+                        
+                        adminLoginStatusMessage.textContent = "เข้าสู่ระบบผู้ดูแลระบบสำเร็จ";
+                        adminLoginStatusMessage.classList.add('visible');
+                        setTimeout(() => {
+                            adminLoginStatusMessage.classList.remove('visible');
+                            adminLoginStatusMessage.textContent = '';
+                        }, 3000);
+                        console.log("Admin logged in:", user.uid);
+                    } else {
+                        // This case would typically not happen if Firebase auth is setup correctly and only admin user exists.
+                        // But it's a safeguard if a non-admin user somehow signs in with email/password.
+                        showPasswordError("คุณไม่มีสิทธิ์ผู้ดูแลระบบ");
+                        isAdminLoggedIn = false;
+                        toggleAdminActionButtons(false);
+                        hideDailyReport();
+                        // Sign out the non-admin user if they successfully logged into Firebase but are not the designated ADMIN_UID
+                        await signOut(auth); 
+                        console.warn("User logged in but not recognized as Admin UID:", user ? user.uid : 'No user');
+                    }
+                } catch (error) {
+                    console.error("Firebase Login Error:", error.code, error.message);
+                    let errorMessage = "การเข้าสู่ระบบผู้ดูแลระบบล้มเหลว โปรดตรวจสอบรหัสผ่าน";
+                    if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                        errorMessage = "อีเมลหรือรหัสผ่านไม่ถูกต้อง";
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMessage = "มีจำนวนการพยายามเข้าสู่ระบบมากเกินไป โปรดลองอีกครั้งในภายหลัง";
+                    }
+                    showPasswordError(errorMessage);
                     isAdminLoggedIn = false;
-                    toggleAdminActionButtons(false); 
-                    hideDailyReport(); 
+                    toggleAdminActionButtons(false);
+                    hideDailyReport();
+                } finally {
+                    showLoading(false);
                 }
                 event.preventDefault();
             }
@@ -2150,7 +2224,7 @@
                 showLoading(false); 
             } else {
                 showAdminPanel(); 
-                showPasswordError("กรุณากรอก Passphrase ก่อน"); 
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง"); 
             }
         });
 
@@ -2162,7 +2236,7 @@
                 showImportStudentIdsModal(); 
             } else {
                 showAdminPanel(); 
-                showPasswordError("กรุณากรอก Passphrase ก่อน"); 
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง"); 
             }
         });
 
@@ -2174,7 +2248,7 @@
                 showViewPreRegisteredIdsModal(); 
             } else {
                 showAdminPanel(); 
-                showPasswordError("กรุณากรอก Passphrase ก่อน"); 
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง"); 
             }
         });
 
@@ -2191,7 +2265,7 @@
                 }
             } else {
                 showAdminPanel(); 
-                showPasswordError("กรุณากรอก Passphrase ก่อน"); 
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง"); 
             }
         });
 
@@ -2219,7 +2293,7 @@
                 }, "ยืนยัน"); // Require "ยืนยัน" for confirmation
             } else {
                 showAdminPanel(); 
-                showPasswordError("กรุณากรอก Passphrase ก่อน"); 
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง"); 
             }
         });
 
@@ -2227,7 +2301,7 @@
         deleteReportButton.addEventListener('click', () => {
             if (!isAdminLoggedIn) {
                 showAdminPanel();
-                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง");
                 return;
             }
             const selectedSessionId = sessionSelect.value;
@@ -2257,7 +2331,7 @@
         toggleFormVisibilityButton.addEventListener('click', async () => {
             if (!isAdminLoggedIn) {
                 showAdminPanel();
-                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                showPasswordError("กรุณากรอกอีเมลและรหัสผ่านก่อนเข้าถึง");
                 return;
             }
             
@@ -2292,6 +2366,10 @@
         adminPasswordInput.addEventListener('input', () => {
             passwordErrorDisplay.classList.add('hidden'); 
         });
+        // Add an event listener to the email input itself to hide the error when user types
+        adminEmailInput.addEventListener('input', () => {
+            passwordErrorDisplay.classList.add('hidden'); 
+        });
 
         // Import Modal Button Listeners
         confirmImportIdsButton.addEventListener('click', savePreRegisteredIds);
@@ -2318,7 +2396,7 @@
         deleteSelectedPreRegisteredIdsButton.addEventListener('click', () => {
             if (!isAdminLoggedIn) { // Check admin login status
                 showAdminPanel();
-                showPasswordError("กรุณากรอก Passphrase ก่อน");
+                showPasswordError("คุณไม่มีสิทธิ์ดำเนินการนี้"); // Changed error message
                 return;
             }
             if (selectedPreRegIdsForDeletion.size > 0) {
